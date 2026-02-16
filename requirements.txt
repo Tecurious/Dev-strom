@@ -1,4 +1,5 @@
 langchain>=1.0
+langchain-openai>=0.2
 langgraph>=1.0
 deepagents>=0.4.0
 python-dotenv>=1.0

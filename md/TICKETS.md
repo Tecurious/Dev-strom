@@ -63,7 +63,7 @@ Implement a LangChain tool that performs web search for project ideas and tutori
 
 ## DEVSTROM-3 — LangGraph (fetch_web_context + generate_ideas)
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Task  
 **Priority:** High  
@@ -75,11 +75,11 @@ Implement the LangGraph workflow with two nodes: `fetch_web_context` and `genera
 
 ### Acceptance criteria
 
-- [ ] A compiled LangGraph is defined with state containing at least: `tech_stack` (str), `web_context` (str), `ideas` (list or str).
-- [ ] Node `fetch_web_context`: reads `tech_stack` from state; calls the web search tool (from DEVSTROM-2); writes result to state under `web_context`.
-- [ ] Node `generate_ideas`: reads `tech_stack` and `web_context` from state; invokes an LLM (or placeholder) with a prompt that asks for 3 ideas in the schema from DEVSTROM-1; writes result to state under `ideas`.
-- [ ] Edges: `START → fetch_web_context → generate_ideas → END`. No conditional edges required for v1.
-- [ ] Invoking the graph with input `{"tech_stack": "LangChain, LangGraph, Deep Agents"}` returns state where `web_context` is non-empty and `ideas` contains 3 ideas in the agreed format (LLM can be mocked for this ticket if Deep Agent is added in DEVSTROM-4).
+- [x] A compiled LangGraph is defined with state containing at least: `tech_stack` (str), `web_context` (str), `ideas` (list or str).
+- [x] Node `fetch_web_context`: reads `tech_stack` from state; calls the web search tool (from DEVSTROM-2); writes result to state under `web_context`.
+- [x] Node `generate_ideas`: reads `tech_stack` and `web_context` from state; invokes an LLM (or placeholder) with a prompt that asks for 3 ideas in the schema from DEVSTROM-1; writes result to state under `ideas`.
+- [x] Edges: `START → fetch_web_context → generate_ideas → END`. No conditional edges required for v1.
+- [x] Invoking the graph with input `{"tech_stack": "LangChain, LangGraph, Deep Agents"}` returns state where `web_context` is non-empty and `ideas` contains 3 ideas in the agreed format (LLM can be mocked for this ticket if Deep Agent is added in DEVSTROM-4).
 
 ### Instructions
 
@@ -155,7 +155,7 @@ Provide a single entry point for users: input a tech stack string and receive th
 |--------------|------------------------------------|--------|--------------|
 | DEVSTROM-1   | Project setup and output schema    | [x]   | —            |
 | DEVSTROM-2   | Web search tool (LangChain)        | [x]   | DEVSTROM-1   |
-| DEVSTROM-3   | LangGraph (fetch + generate)       | [ ]    | DEVSTROM-1, 2 |
+| DEVSTROM-3   | LangGraph (fetch + generate)       | [x]   | DEVSTROM-1, 2 |
 | DEVSTROM-4   | Deep Agent integration and middleware | [ ]  | DEVSTROM-3   |
 | DEVSTROM-5   | CLI or FastAPI endpoint            | [ ]    | DEVSTROM-4   |
 
