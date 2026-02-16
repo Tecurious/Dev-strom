@@ -10,10 +10,19 @@ from schema import ProjectIdea
 from tools import web_search_project_ideas
 
 
-class DevStromState(TypedDict):
+class DevStromStateRequired(TypedDict):
     tech_stack: str
     web_context: str
     ideas: list
+
+
+class DevStromStateOptional(TypedDict, total=False):
+    domain: str
+    level: str
+
+
+class DevStromState(DevStromStateRequired, DevStromStateOptional):
+    pass
 
 
 def fetch_web_context(state: DevStromState) -> dict:
@@ -22,11 +31,37 @@ def fetch_web_context(state: DevStromState) -> dict:
     return {"web_context": result or ""}
 
 
-IDEAS_SYSTEM = """You are a project-idea generator for developers learning a tech stack.
-Output exactly 3 concrete project ideas as valid JSON only. Do not use any tools.
-Use this exact shape (no markdown, no extra text):
-{"ideas": [{"name": "...", "problem_statement": "...", "why_it_fits": ["...", "..."], "real_world_value": "...", "implementation_plan": ["...", "..."]}, ...]}
-Each idea: name, problem_statement (1-2 sentences), why_it_fits (list, one bullet per tech), real_world_value (one sentence), implementation_plan (list of 3-5 steps).
+IDEAS_SYSTEM = """You are a strictly-controlled project-idea generator for developers learning a tech stack.
+
+Follow these instructions exactly and obey all guardrails:
+
+1. Output MUST be valid JSON, using ONLY the exact shape below. Do NOT include markdown code fence, explanation, headings, or any extra text.
+2. Generate exactly 3 concrete project ideas. No more, no less.
+3. Use THIS JSON shape, and nothing else:
+{
+  "ideas": [
+    {
+      "name": "...",
+      "problem_statement": "...",
+      "why_it_fits": ["...", "..."],
+      "real_world_value": "...",
+      "implementation_plan": ["...", "..."]
+    },
+    ...
+  ]
+}
+4. Each idea MUST include:
+   - "name": Short, clear project title
+   - "problem_statement": 1–2 sentences explaining what problem the project solves
+   - "why_it_fits": A LIST with one bullet per tech (describe why each key tech is relevant)
+   - "real_world_value": ONE sentence on practical value or impact
+   - "implementation_plan": LIST of 3–5 actionable steps to implement the project
+5. If user provides a domain (e.g. fintech, dev tools) or level (e.g. beginner, portfolio), bias ALL ideas toward that domain and/or level.
+6. STRICT GUARDRAILS:
+   - NO markdown, code blocks, comments, or text before/after/beside the JSON.
+   - Do NOT use any tools or external APIs.
+   - Do NOT invent new fields or deviate from required JSON structure.
+   - If you cannot comply with all instructions, output an empty JSON: {"ideas": []}
 """
 
 
@@ -70,7 +105,15 @@ def _parse_ideas_response(raw: str) -> list:
 def generate_ideas(state: DevStromState) -> dict:
     tech_stack = state["tech_stack"]
     web_context = state["web_context"]
-    user_content = f"Tech stack: {tech_stack}\n\nWeb context:\n{web_context[:4000]}\n\nOutput exactly 3 ideas as JSON:\n"
+    domain = state.get("domain")
+    level = state.get("level")
+    parts = [f"Tech stack: {tech_stack}"]
+    if domain:
+        parts.append(f"Domain (bias ideas toward): {domain}")
+    if level:
+        parts.append(f"Level (bias ideas toward): {level}")
+    parts.append(f"\nWeb context:\n{web_context[:4000]}\n\nOutput exactly 3 ideas as JSON:\n")
+    user_content = "\n".join(parts)
     result = _get_idea_agent().invoke({
         "messages": [{"role": "user", "content": user_content}],
     })
