@@ -1,10 +1,10 @@
 # Dev-Strom
 
-Suggests project ideas for a tech stack using web search and LLM. See [PLAN.md](PLAN.md) and [TICKETS.md](TICKETS.md).
+Suggests project ideas for a tech stack using web search and LLM. See [md/PLAN.md](md/PLAN.md) and [md/V1_TICKETS.md](md/V1_TICKETS.md).
 
 ## Architecture
 
-![Dev-Strom architecture flow](../docs/architecture.png)
+![Dev-Strom architecture flow](docs/architecture.png)
 
 
 
