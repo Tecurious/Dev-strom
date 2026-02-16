@@ -61,11 +61,22 @@ Add an optional step that summarizes raw web snippets into a short **themes summ
 3. Ensure `generate_ideas` receives either the raw context (when summarization off) or the themes summary (when on); state shape can stay `web_context` (overwrite with summary) or add an optional key and pass the chosen one into the prompt.
 4. Update README or code docs for the new option.
 
+### Pending evaluation
+
+**⚠️ Quality concern identified:** Testing shows summarization may remove valuable technical details (library names, algorithms, implementation specifics) that developers need. Raw output preserves these details better.
+
+**Status:** Implementation complete and merged to `feature/DEVSTROM-V2-2` branch. Feature defaults to OFF (preserves V1 behavior). Do not merge to main until quality evaluation is complete.
+
+**Next steps:**
+- Evaluate summarization quality vs raw output in production testing
+- Consider alternatives: extraction/formatting instead of summarization, or deprecate if quality degradation is confirmed
+- See PR comments for detailed analysis
+
 ---
 
 ## DEVSTROM-V2-3 — Multi-query web context
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Feature  
 **Priority:** High  
@@ -77,11 +88,11 @@ Run 2–3 web search queries per run (e.g. "project ideas for {stack}", "{stack}
 
 ### Acceptance criteria
 
-- [ ] `fetch_web_context` (or web search tool) runs multiple queries when multi-query is enabled; results are merged into one string.
-- [ ] If a total length cap is applied (e.g. for prompt limits), it is implemented so each query contributes (e.g. per-query cap or proportional split), not by truncating the merged string from the end.
-- [ ] Single-query mode remains available (config or default); V1 behavior preserved when multi-query is off.
-- [ ] State key `web_context` remains a single string; no change to `generate_ideas` contract.
-- [ ] Document how to enable/configure multi-query (env, constant, or optional param).
+- [x] `fetch_web_context` (or web search tool) runs multiple queries when multi-query is enabled; results are merged into one string.
+- [x] If a total length cap is applied (e.g. for prompt limits), it is implemented so each query contributes (e.g. per-query cap or proportional split), not by truncating the merged string from the end.
+- [x] Single-query mode remains available (config or default); V1 behavior preserved when multi-query is off.
+- [x] State key `web_context` remains a single string; no change to `generate_ideas` contract.
+- [x] Document how to enable/configure multi-query (env, constant, or optional param).
 
 ### Instructions
 
@@ -296,7 +307,7 @@ Add structured logging (request id, step, latency, errors) across the graph and 
 |-----------------|------------------------------------|------|---------------|
 | DEVSTROM-V2-1   | Optional domain and level input    | [x]  | None          |
 | DEVSTROM-V2-2   | Web context summarization (themes) | [ ]  | None          |
-| DEVSTROM-V2-3   | Multi-query web context            | [ ]  | None          |
+| DEVSTROM-V2-3   | Multi-query web context            | [x]  | None          |
 | DEVSTROM-V2-4   | Configurable count + expand idea   | [ ]  | None          |
 | DEVSTROM-V2-5   | Export (markdown, CLI, UI)         | [ ]  | None          |
 | DEVSTROM-V2-6   | Session history + persistence     | [ ]  | None          |
@@ -305,6 +316,6 @@ Add structured logging (request id, step, latency, errors) across the graph and 
 | DEVSTROM-V2-9   | Caching by input key              | [ ]  | None          |
 | DEVSTROM-V2-10  | Structured logging and tracing    | [ ]  | None          |
 
-**v2 progress:** [x] 1/10 complete
+**v2 progress:** [x] 2/10 complete
 
 Pick any ticket; complete and merge in any order. Preserve existing V1 functionality.

@@ -27,15 +27,21 @@ Edit `.env` and set:
 | Option | Command | Description |
 |--------|---------|-------------|
 | **UI** | `streamlit run ui.py` | Browser UI: enter tech stack, click "Get ideas", see 3 ideas. Easiest way to try it. |
-| **CLI** | `python scripts/run_graph.py "LangChain, LangGraph"` | Prints 3 ideas to the terminal. Add `--stream` to see state after each step; `--debug` for full traces. |
-| **API** | `uvicorn api:api --reload` | HTTP server on port 8000. `POST /ideas` with `{"tech_stack": "..."}` returns `{"ideas": [...]}`. |
+| **CLI** | `python scripts/run_graph.py "LangChain, LangGraph"` | Prints 3 ideas to the terminal. Add `--stream` to see state after each step; `--debug` for full traces. Optional: `--domain`, `--level`, `--enable-multi-query`. |
+| **API** | `uvicorn api:api --reload` | HTTP server on port 8000. `POST /ideas` with `{"tech_stack": "..."}` returns `{"ideas": [...]}`. Optional fields: `domain`, `level`, `enable_multi_query`. |
 
 **Example (API):**
 
 ```bash
 curl -X POST http://localhost:8000/ideas \
   -H "Content-Type: application/json" \
-  -d '{"tech_stack": "React, Node.js, PostgreSQL"}'
+  -d '{"tech_stack": "React, Node.js, PostgreSQL", "domain": "fintech", "enable_multi_query": true}'
+```
+
+**Example (CLI with options):**
+
+```bash
+python scripts/run_graph.py "React, Node.js" --domain fintech --level beginner --enable-multi-query
 ```
 
 **Docs (when API is running):** [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger), [http://localhost:8000/redoc](http://localhost:8000/redoc) (ReDoc).
@@ -60,6 +66,10 @@ User input: "LangChain, LangGraph"
 │    ▼                                                                     │
 │  fetch_web_context(state)                                                │
 │    │  • Uses LangChain tool: web_search_project_ideas                    │
+│    │  • If enable_multi_query=true: runs 2-3 queries                     │
+│    │    ("project ideas", "tutorials", "example projects")               │
+│    │    and merges with fair per-query cap                              │
+│    │  • If enable_multi_query=false: single query (V1)                  │
 │    │  • Calls Tavily API                                                 │
 │    │  • Returns {"web_context": "..."}                                   │
 │    ▼                                                                     │
@@ -79,8 +89,8 @@ Final state: {tech_stack, web_context, ideas}
 
 **Step-by-step:**
 
-1. **Input:** User provides a tech stack string (e.g. via UI, CLI, or API).
-2. **fetch_web_context:** LangGraph node reads `tech_stack`, calls the LangChain web search tool (Tavily), writes snippets to `web_context` in state.
+1. **Input:** User provides a tech stack string (e.g. via UI, CLI, or API). Optional: `domain`, `level`, `enable_multi_query`.
+2. **fetch_web_context:** LangGraph node reads `tech_stack` and `enable_multi_query`. If multi-query enabled, runs 2-3 queries ("project ideas for {stack}", "{stack} tutorials", "{stack} example projects") with fair per-query character limits, then merges results. If disabled, runs single query (V1 behavior). Calls the LangChain web search tool (Tavily), writes snippets to `web_context` in state.
 3. **generate_ideas:** LangGraph node reads `tech_stack` and `web_context`, invokes the Deep Agent with a prompt; the agent returns JSON, which is parsed into 3 `ProjectIdea` objects and written to `ideas` in state.
 4. **Output:** Final state contains `tech_stack`, `web_context`, and `ideas` (exactly 3 project ideas).
 

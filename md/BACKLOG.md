@@ -36,6 +36,8 @@ Features and improvements that are not in the current v1 or v2 scope. Prioritize
 - **Internationalization (i18n)** — Multiple languages for the UI and optional localization of generated ideas. Not in v2 scope.
 - **Favorites / saved ideas** — Let users mark specific ideas as favorites and list them separately from full run history. Partially overlaps with history (V2-6); can be added on top of persistence later.
 - **Feedback on ideas** — Thumbs up/down or ratings on generated ideas to improve future prompts or ranking. Not in v2 scope.
+- **Estimated time per project idea** — Add a small metadata tag at the top of each idea card (e.g. "Weekend Project", "1–2 Weeks", "4-Week Build") to signal expected scope and effort. Especially useful for larger, architect-level ideas so users can quickly choose work that fits their available time. Post-V2, should be implemented in a backward-compatible way (e.g. optional field or UI-only metadata) without breaking current API/CLI contracts.
+- **Resume keywords per idea** — Extract 3–4 high-signal keywords per idea (e.g. `Microservices`, `Event-Driven`, `High-Availability`) and display them as metadata chips on the card. Keywords should reflect what recruiters/ATS search for and be derived from existing idea content (tech stack, patterns, architecture). This is a post-V2, additive enhancement and should avoid breaking existing response schemas by default.
 
 ---
 
