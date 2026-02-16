@@ -36,13 +36,20 @@ def log_model_call(request, handler):
     return handler(request)
 
 
-_idea_agent = create_deep_agent(
-    name="idea_generator",
-    model="gpt-4o-mini",
-    tools=[],
-    system_prompt=IDEAS_SYSTEM,
-    middleware=[log_model_call],
-)
+_idea_agent = None
+
+
+def _get_idea_agent():
+    global _idea_agent
+    if _idea_agent is None:
+        _idea_agent = create_deep_agent(
+            name="idea_generator",
+            model="gpt-4o-mini",
+            tools=[],
+            system_prompt=IDEAS_SYSTEM,
+            middleware=[log_model_call],
+        )
+    return _idea_agent
 
 
 def _parse_ideas_response(raw: str) -> list:
@@ -64,7 +71,7 @@ def generate_ideas(state: DevStromState) -> dict:
     tech_stack = state["tech_stack"]
     web_context = state["web_context"]
     user_content = f"Tech stack: {tech_stack}\n\nWeb context:\n{web_context[:4000]}\n\nOutput exactly 3 ideas as JSON:\n"
-    result = _idea_agent.invoke({
+    result = _get_idea_agent().invoke({
         "messages": [{"role": "user", "content": user_content}],
     })
     messages = result.get("messages", [])
