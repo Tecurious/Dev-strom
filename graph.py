@@ -44,7 +44,7 @@ def _get_idea_agent():
     if _idea_agent is None:
         _idea_agent = create_deep_agent(
             name="idea_generator",
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             tools=[],
             system_prompt=IDEAS_SYSTEM,
             middleware=[log_model_call],

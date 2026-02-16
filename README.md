@@ -44,11 +44,47 @@ curl -X POST http://localhost:8000/ideas \
 
 ## Architecture
 
+### End-to-end flow
+
 ![Dev-Strom architecture flow](docs/architecture.png)
 
-1. **Input:** User provides a tech stack string.
-2. **fetch_web_context:** Calls the web search tool (Tavily), stores snippets in state.
-3. **generate_ideas:** Deep Agent reads `tech_stack` + `web_context`, returns 3 ideas in a fixed schema.
+```
+User input: "LangChain, LangGraph"
+         │
+         ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│  LangGraph (app.invoke)                                                  │
+│                                                                          │
+│  START                                                                   │
+│    │                                                                     │
+│    ▼                                                                     │
+│  fetch_web_context(state)                                                │
+│    │  • Uses LangChain tool: web_search_project_ideas                    │
+│    │  • Calls Tavily API                                                 │
+│    │  • Returns {"web_context": "..."}                                   │
+│    ▼                                                                     │
+│  generate_ideas(state)                                                   │
+│    │  • Builds user_content = tech_stack + web_context                   │
+│    │  • Invokes Deep Agent (LangGraph internally)                        │
+│    │  • Deep Agent: LLM call with middleware (e.g. logging)              │
+│    │  • Parses JSON → ProjectIdea objects                                │
+│    │  • Returns {"ideas": [...]}                                         │
+│    ▼                                                                     │
+│  END                                                                     │
+└─────────────────────────────────────────────────────────────────────────┘
+         │
+         ▼
+Final state: {tech_stack, web_context, ideas}
+```
+
+**Step-by-step:**
+
+1. **Input:** User provides a tech stack string (e.g. via UI, CLI, or API).
+2. **fetch_web_context:** LangGraph node reads `tech_stack`, calls the LangChain web search tool (Tavily), writes snippets to `web_context` in state.
+3. **generate_ideas:** LangGraph node reads `tech_stack` and `web_context`, invokes the Deep Agent with a prompt; the agent returns JSON, which is parsed into 3 `ProjectIdea` objects and written to `ideas` in state.
+4. **Output:** Final state contains `tech_stack`, `web_context`, and `ideas` (exactly 3 project ideas).
+
+### Layers
 
 | Layer | Role |
 |-------|------|
