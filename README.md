@@ -2,6 +2,20 @@
 
 Suggests project ideas for a tech stack using web search and LLM. See [PLAN.md](PLAN.md) and [TICKETS.md](TICKETS.md).
 
+## Architecture
+
+![Dev-Strom architecture flow](docs/architecture.png)
+
+
+
+**Flow:** User sends a tech stack → **fetch_web_context** runs the web search tool (Tavily) and stores snippets in state → **generate_ideas** uses that context plus an LLM/agent to produce 3 ideas in the schema → response returns the 3 ideas.
+
+| Layer        | Role                                                                 |
+|-------------|----------------------------------------------------------------------|
+| **LangGraph** | Orchestration: state (tech_stack, web_context, ideas) and nodes fetch_web_context → generate_ideas. |
+| **LangChain** | Web search tool and prompts.                                        |
+| **Deep Agents** | Generates the 3 ideas inside the generate_ideas node (with optional middleware). |
+
 ## Setup
 
 ```bash
