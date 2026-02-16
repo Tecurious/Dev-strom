@@ -11,6 +11,8 @@ pip install -r requirements.txt
 cp .env.example .env       # then set OPENAI_API_KEY and TAVILY_API_KEY
 ```
 
+Set `TAVILY_API_KEY` in `.env` for web search (get one at https://tavily.com). Set `OPENAI_API_KEY` for the idea-generation agent.
+
 ## Schema
 
 Output shape for the 3 ideas is defined in `schema.py`: `ProjectIdea` (name, problem_statement, why_it_fits, real_world_value, implementation_plan) and `IdeasResponse` (list of exactly 3 ideas).
