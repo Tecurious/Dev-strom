@@ -8,14 +8,15 @@ load_dotenv()
 from graph import app as graph_app
 
 st.set_page_config(page_title="Dev-Strom", page_icon="💡")
-st.title("Dev-Strom")
-st.caption("Get 3 project ideas for a tech stack (web search + LLM)")
+st.title("Dev-Strom ⛈️")
+st.caption("Get curated project ideas for any tech stack or job role")
 
 tech_stack = st.text_input(
-    "Tech stack",
-    value="LangChain, LangGraph, Deep Agents",
-    placeholder="e.g. React, Node.js, PostgreSQL",
+    "Tech stack or Job Role",
+    placeholder="e.g. LangChain, LangGraph, Deep Agents, etc.",
 )
+domain = st.text_input("Domain or Company (optional)", placeholder="e.g. Retail, Banking, Amazon, Walmart, etc.")
+level = st.text_input("Level (optional)", placeholder="e.g. beginner, portfolio, Sr. Software Engineer, etc.")
 
 if st.button("Get ideas", type="primary"):
     if not os.getenv("OPENAI_API_KEY") or not os.getenv("TAVILY_API_KEY"):
@@ -24,23 +25,37 @@ if st.button("Get ideas", type="primary"):
     if not tech_stack.strip():
         st.warning("Enter a tech stack")
         st.stop()
+    inputs = {"tech_stack": tech_stack.strip()}
+    if domain and domain.strip():
+        inputs["domain"] = domain.strip()
+    if level and level.strip():
+        inputs["level"] = level.strip()
     with st.spinner("Fetching web context and generating ideas…"):
-        result = graph_app.invoke({"tech_stack": tech_stack.strip()})
+        result = graph_app.invoke(inputs)
     ideas = result.get("ideas", [])
     if len(ideas) != 3:
         st.error(f"Expected 3 ideas, got {len(ideas)}")
         st.stop()
+    def _idea_dict(idea):
+        return idea if isinstance(idea, dict) else (idea.model_dump() if hasattr(idea, "model_dump") else {})
+
+    all_empty = all(not ((_idea_dict(idea).get("name") or "").strip()) for idea in ideas)
+    if all_empty:
+        st.warning("Ideas could not be generated (model returned empty or invalid response). Try again.")
     for i, idea in enumerate(ideas, 1):
-        d = idea if isinstance(idea, dict) else {}
-        with st.expander(f"**{i}. {d.get('name', 'Idea')}**", expanded=True):
+        d = _idea_dict(idea)
+        name = (d.get("name") or "").strip() or "Idea"
+        with st.expander(f"{i}. {name}", expanded=True):
+            problem = (d.get("problem_statement") or "").strip()
             st.markdown("**Problem**")
-            st.write(d.get("problem_statement", ""))
+            st.write(problem if problem else "_Could not generate. Try again._")
             fits = d.get("why_it_fits") or []
             if fits:
                 st.markdown("**Why it fits**")
                 st.markdown("\n".join(f"- {b}" for b in fits))
             st.markdown("**Real-world value**")
-            st.write(d.get("real_world_value", ""))
+            real = (d.get("real_world_value") or "").strip()
+            st.write(real if real else "_Could not generate. Try again._")
             steps = d.get("implementation_plan") or []
             if steps:
                 st.markdown("**Implementation plan**")

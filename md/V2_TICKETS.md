@@ -8,7 +8,7 @@ Work in any order. Each ticket is additive; defaults preserve current behavior.
 
 ## DEVSTROM-V2-1 — Optional domain and level input
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Feature  
 **Priority:** High  
@@ -20,11 +20,11 @@ Add optional `domain` (e.g. fintech, dev tools) and `level` (e.g. beginner, port
 
 ### Acceptance criteria
 
-- [ ] API: `POST /ideas` accepts optional `domain` and `level` in the request body; both default to null/omit.
-- [ ] CLI: optional flags or args for domain and level; graph receives them when provided.
-- [ ] UI: optional input fields for domain and level; submit sends them when filled.
-- [ ] Graph state (or prompt) includes domain and level when provided; prompt instructs the model to bias ideas accordingly.
-- [ ] Existing calls with only `tech_stack` behave exactly as in V1.
+- [x] API: `POST /ideas` accepts optional `domain` and `level` in the request body; both default to null/omit.
+- [x] CLI: optional flags or args for domain and level; graph receives them when provided.
+- [x] UI: optional input fields for domain and level; submit sends them when filled.
+- [x] Graph state (or prompt) includes domain and level when provided; prompt instructs the model to bias ideas accordingly.
+- [x] Existing calls with only `tech_stack` behave exactly as in V1.
 
 ### Instructions
 
@@ -294,7 +294,7 @@ Add structured logging (request id, step, latency, errors) across the graph and 
 
 | Key             | Title                              | Done | Dependencies |
 |-----------------|------------------------------------|------|---------------|
-| DEVSTROM-V2-1   | Optional domain and level input    | [ ]  | None          |
+| DEVSTROM-V2-1   | Optional domain and level input    | [x]  | None          |
 | DEVSTROM-V2-2   | Web context summarization (themes) | [ ]  | None          |
 | DEVSTROM-V2-3   | Multi-query web context            | [ ]  | None          |
 | DEVSTROM-V2-4   | Configurable count + expand idea   | [ ]  | None          |
@@ -305,6 +305,6 @@ Add structured logging (request id, step, latency, errors) across the graph and 
 | DEVSTROM-V2-9   | Caching by input key              | [ ]  | None          |
 | DEVSTROM-V2-10  | Structured logging and tracing    | [ ]  | None          |
 
-**v2 progress:** [ ] 0/10 complete
+**v2 progress:** [x] 1/10 complete
 
 Pick any ticket; complete and merge in any order. Preserve existing V1 functionality.
