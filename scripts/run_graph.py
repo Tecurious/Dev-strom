@@ -17,6 +17,7 @@ def main():
     parser.add_argument("tech_stack", nargs="?", default="LangChain, LangGraph, Deep Agents", help="Tech stack string")
     parser.add_argument("--domain", default=None, help="Optional domain to bias ideas (e.g. fintech, dev tools)")
     parser.add_argument("--level", default=None, help="Optional level to bias ideas (e.g. beginner, portfolio)")
+    parser.add_argument("--enable-summarization", action="store_true", help="Enable web context summarization (themes) before idea generation")
     parser.add_argument("--stream", action="store_true", help="Stream graph steps and state after each node")
     parser.add_argument("--debug", action="store_true", help="Stream debug traces (node names, inputs, outputs)")
     args = parser.parse_args()
@@ -33,6 +34,8 @@ def main():
         inputs["domain"] = args.domain
     if args.level:
         inputs["level"] = args.level
+    if args.enable_summarization:
+        inputs["enable_summarization"] = True
 
     if args.debug:
         print("--- stream_mode=debug ---")

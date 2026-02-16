@@ -13,6 +13,7 @@ class IdeasRequest(BaseModel):
     tech_stack: str
     domain: str | None = None
     level: str | None = None
+    enable_summarization: bool = False
 
 
 api = FastAPI(title="Dev-Strom")
@@ -27,6 +28,8 @@ def post_ideas(body: IdeasRequest):
         inputs["domain"] = body.domain.strip()
     if body.level and body.level.strip():
         inputs["level"] = body.level.strip()
+    if body.enable_summarization:
+        inputs["enable_summarization"] = True
     result = graph_app.invoke(inputs)
     ideas = result.get("ideas", [])
     if len(ideas) != 3:

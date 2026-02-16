@@ -19,6 +19,7 @@ class DevStromStateRequired(TypedDict):
 class DevStromStateOptional(TypedDict, total=False):
     domain: str
     level: str
+    enable_summarization: bool
 
 
 class DevStromState(DevStromStateRequired, DevStromStateOptional):
@@ -71,7 +72,14 @@ def log_model_call(request, handler):
     return handler(request)
 
 
+@wrap_model_call
+def log_summarizer_call(request, handler):
+    print("[DevStrom middleware] model call (summarize_web_context agent)")
+    return handler(request)
+
+
 _idea_agent = None
+_summarizer_agent = None
 
 
 def _get_idea_agent():
@@ -87,6 +95,26 @@ def _get_idea_agent():
     return _idea_agent
 
 
+def _get_summarizer_agent():
+    global _summarizer_agent
+    if _summarizer_agent is None:
+        _summarizer_agent = create_deep_agent(
+            name="web_context_summarizer",
+            model="gpt-5-mini",
+            tools=[],
+            system_prompt="""You are a web context summarizer. Your task is to analyze raw web search snippets and extract key themes, trends, common project types, and important resources mentioned.
+
+Output a concise summary (2-4 sentences) that captures:
+- Main themes and trends related to the tech stack
+- Common project types or use cases mentioned
+- Key resources, tutorials, or examples referenced
+
+Do not include markdown formatting. Output plain text only.""",
+            middleware=[log_summarizer_call],
+        )
+    return _summarizer_agent
+
+
 def _parse_ideas_response(raw: str) -> list:
     raw = raw.strip()
     if raw.startswith("```"):
@@ -100,6 +128,22 @@ def _parse_ideas_response(raw: str) -> list:
         return [ProjectIdea.model_validate(i) for i in ideas]
     except Exception:
         return []
+
+
+def summarize_web_context(state: DevStromState) -> dict:
+    web_context = state["web_context"]
+    if not web_context or not web_context.strip():
+        return {"web_context": web_context}
+    user_content = f"Summarize the following web snippets into a short themes summary:\n\n{web_context[:6000]}\n\nProvide a concise summary of themes, trends, project types, and key resources:"
+    result = _get_summarizer_agent().invoke({
+        "messages": [{"role": "user", "content": user_content}],
+    })
+    messages = result.get("messages", [])
+    summary = messages[-1].content if messages and hasattr(messages[-1], "content") else str(messages[-1]) if messages else web_context
+    summary = summary.strip()
+    if not summary:
+        summary = web_context
+    return {"web_context": summary}
 
 
 def generate_ideas(state: DevStromState) -> dict:
@@ -125,12 +169,20 @@ def generate_ideas(state: DevStromState) -> dict:
     return {"ideas": [i.model_dump() if hasattr(i, "model_dump") else i for i in ideas]}
 
 
+def should_summarize(state: DevStromState) -> str:
+    if state.get("enable_summarization"):
+        return "summarize_web_context"
+    return "generate_ideas"
+
+
 def build_graph():
     graph = StateGraph(DevStromState)
     graph.add_node("fetch_web_context", fetch_web_context)
+    graph.add_node("summarize_web_context", summarize_web_context)
     graph.add_node("generate_ideas", generate_ideas)
     graph.add_edge(START, "fetch_web_context")
-    graph.add_edge("fetch_web_context", "generate_ideas")
+    graph.add_conditional_edges("fetch_web_context", should_summarize)
+    graph.add_edge("summarize_web_context", "generate_ideas")
     graph.add_edge("generate_ideas", END)
     return graph.compile()
 

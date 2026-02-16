@@ -17,6 +17,7 @@ tech_stack = st.text_input(
 )
 domain = st.text_input("Domain or Company (optional)", placeholder="e.g. Retail, Banking, Amazon, Walmart, etc.")
 level = st.text_input("Level (optional)", placeholder="e.g. beginner, portfolio, Sr. Software Engineer, etc.")
+enable_summarization = st.checkbox("Enable web context summarization", value=False, help="Summarize web snippets into themes before generating ideas (may improve quality)")
 
 if st.button("Get ideas", type="primary"):
     if not os.getenv("OPENAI_API_KEY") or not os.getenv("TAVILY_API_KEY"):
@@ -30,6 +31,8 @@ if st.button("Get ideas", type="primary"):
         inputs["domain"] = domain.strip()
     if level and level.strip():
         inputs["level"] = level.strip()
+    if enable_summarization:
+        inputs["enable_summarization"] = True
     with st.spinner("Fetching web context and generating ideas…"):
         result = graph_app.invoke(inputs)
     ideas = result.get("ideas", [])
