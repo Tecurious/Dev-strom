@@ -122,7 +122,7 @@ Replace the plain LLM call in the `generate_ideas` node with a Deep Agent that r
 
 ## DEVSTROM-5 — CLI or FastAPI endpoint
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Task  
 **Priority:** High  
@@ -134,10 +134,10 @@ Provide a single entry point for users: input a tech stack string and receive th
 
 ### Acceptance criteria
 
-- [ ] User can pass the tech stack (e.g. "LangChain, LangGraph, Deep Agents") and receive the 3 ideas in the agreed schema (JSON or formatted text).
-- [ ] If CLI: e.g. `python run.py "LangChain, LangGraph"` or `devstrom "LangChain, LangGraph"` prints or saves the 3 ideas. If API: e.g. `POST /ideas` with `{"tech_stack": "..."}` returns `{"ideas": [...]}`.
-- [ ] The entry point uses the compiled LangGraph from DEVSTROM-3/4; env vars are loaded (e.g. dotenv) so API keys work.
-- [ ] README or PLAN.md describes how to run the project (install, set env, run CLI or start server).
+- [x] User can pass the tech stack (e.g. "LangChain, LangGraph, Deep Agents") and receive the 3 ideas in the agreed schema (JSON or formatted text).
+- [x] If CLI: e.g. `python run.py "LangChain, LangGraph"` or `devstrom "LangChain, LangGraph"` prints or saves the 3 ideas. If API: e.g. `POST /ideas` with `{"tech_stack": "..."}` returns `{"ideas": [...]}`.
+- [x] The entry point uses the compiled LangGraph from DEVSTROM-3/4; env vars are loaded (e.g. dotenv) so API keys work.
+- [x] README or PLAN.md describes how to run the project (install, set env, run CLI or start server).
 
 ### Instructions
 
@@ -157,8 +157,8 @@ Provide a single entry point for users: input a tech stack string and receive th
 | DEVSTROM-2   | Web search tool (LangChain)        | [x]   | DEVSTROM-1   |
 | DEVSTROM-3   | LangGraph (fetch + generate)       | [x]   | DEVSTROM-1, 2 |
 | DEVSTROM-4   | Deep Agent integration and middleware | [x]  | DEVSTROM-3   |
-| DEVSTROM-5   | CLI or FastAPI endpoint            | [ ]    | DEVSTROM-4   |
+| DEVSTROM-5   | CLI or FastAPI endpoint            | [x]    | DEVSTROM-4   |
 
-**v1 progress:** [ ] All tickets complete
+**v1 progress:** [x] All tickets complete
 
 Mark tickets complete: check "Ticket completed" and the acceptance criteria for each ticket, and the matching row in the table above. Sync with [PLAN.md](PLAN.md) v1 Todo.

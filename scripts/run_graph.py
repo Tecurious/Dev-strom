@@ -60,8 +60,20 @@ def main():
     print("web_context length:", len(result["web_context"]))
     print("ideas count:", len(ideas))
     for i, idea in enumerate(ideas, 1):
-        name = idea.get("name", "") if isinstance(idea, dict) else getattr(idea, "name", "")
-        print(f"  {i}. {name}")
+        d = idea if isinstance(idea, dict) else idea.model_dump() if hasattr(idea, "model_dump") else {}
+        print(f"\n--- Idea {i}: {d.get('name', '')} ---")
+        print("  problem_statement:", (d.get("problem_statement") or "")[:200] + ("..." if len(d.get("problem_statement") or "") > 200 else ""))
+        fits = d.get("why_it_fits") or []
+        if fits:
+            print("  why_it_fits:")
+            for b in fits:
+                print(f"    - {b}")
+        print("  real_world_value:", (d.get("real_world_value") or "")[:150] + ("..." if len(d.get("real_world_value") or "") > 150 else ""))
+        steps = d.get("implementation_plan") or []
+        if steps:
+            print("  implementation_plan:")
+            for s in steps:
+                print(f"    - {s}")
 
 
 if __name__ == "__main__":

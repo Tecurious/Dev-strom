@@ -1,10 +1,10 @@
 # Dev-Strom
 
-Suggests project ideas for a tech stack using web search and LLM. See [PLAN.md](PLAN.md) and [TICKETS.md](TICKETS.md).
+Suggests project ideas for a tech stack using web search and LLM. See [md/PLAN.md](md/PLAN.md) and [md/V1_TICKETS.md](md/V1_TICKETS.md).
 
 ## Architecture
 
-![Dev-Strom architecture flow](../docs/architecture.png)
+![Dev-Strom architecture flow](docs/architecture.png)
 
 
 
@@ -49,7 +49,9 @@ cp .env.example .env       # then set OPENAI_API_KEY and TAVILY_API_KEY
 
 Set `TAVILY_API_KEY` in `.env` for web search (get one at https://tavily.com). Set `OPENAI_API_KEY` for the idea-generation agent.
 
-**Run the graph:** `python scripts/run_graph.py` or `python scripts/run_graph.py "Your, Tech, Stack"` (requires both API keys in `.env`). Use `--stream` to see state after each node (fetch_web_context, then generate_ideas); use `--debug` to see detailed execution traces.
+**CLI:** `python scripts/run_graph.py` or `python scripts/run_graph.py "Your, Tech, Stack"` (requires both API keys in `.env`). Use `--stream` to see state after each node; use `--debug` for execution traces.
+
+**API:** Start the server with `uvicorn api:api --reload` (default port 8000). Then `POST /ideas` with body `{"tech_stack": "LangChain, LangGraph"}` returns `{"ideas": [...]}`. Example: `curl -X POST http://localhost:8000/ideas -H "Content-Type: application/json" -d '{"tech_stack": "LangChain, LangGraph"}'`.
 
 ## Schema
 

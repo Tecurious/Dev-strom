@@ -44,13 +44,13 @@ User submits stack → **fetch web context** (mandatory) → generate 3 ideas us
 
 ## v1 Todo
 
-See [TICKETS.md](TICKETS.md) for Jira-style tickets with clear instructions. Summary:
+See [V1_TICKETS.md](V1_TICKETS.md) for Jira-style tickets with clear instructions. Summary:
 
 - [x] DEVSTROM-1: Project setup and output schema
 - [x] DEVSTROM-2: Web search tool (LangChain)
 - [x] DEVSTROM-3: LangGraph (fetch_web_context + generate_ideas)
 - [x] DEVSTROM-4: Deep Agent integration and middleware
-- [ ] DEVSTROM-5: CLI or FastAPI endpoint
+- [x] DEVSTROM-5: CLI or FastAPI endpoint
 
 ---
 
