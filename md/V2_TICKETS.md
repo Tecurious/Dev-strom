@@ -131,9 +131,9 @@ Allow requesting a number of ideas other than 3 (e.g. 1–5) via an optional par
 
 ---
 
-## DEVSTROM-V2-5 — Export (markdown, CLI --output, UI download)
+## DEVSTROM-V2-5 — Export one expanded idea as markdown
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Feature  
 **Priority:** Medium  
@@ -141,21 +141,28 @@ Allow requesting a number of ideas other than 3 (e.g. 1–5) via an optional par
 
 ### Description
 
-Allow exporting the generated ideas as a markdown file or downloadable asset. CLI: e.g. `--output ideas.md`. API: optional query param or endpoint that returns markdown. UI: "Download" button that saves a file. No change to existing response format when export is not used.
+Allow the user to export **one expanded idea** (the idea they chose to go ahead with, after running Expand) as a single markdown file. The file is written so that any LLM reading it has full context to execute the project without hallucinating. API: `POST /export` with `{"pid": 1}` returns markdown for that expanded idea (from last POST /ideas and expand for that pid). UI: "Download" or "Export" for an expanded idea saves the .md file. No change to existing ideas or expand response format.
 
 ### Acceptance criteria
 
-- [ ] CLI: flag or option to write ideas to a markdown file (path or stdout); existing default (print to terminal) unchanged.
-- [ ] API: way to get ideas as markdown (e.g. `Accept: text/markdown` or `?format=md` on existing endpoint, or separate endpoint).
-- [ ] UI: button/link to download ideas as a file (e.g. .md); current on-screen display unchanged.
-- [ ] Export format is documented (e.g. one idea per section with all schema fields).
+- [x] API: `POST /export` accepts `{"pid": 1}`; returns markdown for that idea including its **extended_plan** (expanded content). Idea must have been expanded first (server stores last expand result per pid or returns 400 if not expanded).
+- [x] UI: download/export action available for an expanded idea; triggers file save of the same markdown content.
+- [x] Export format is documented and includes: context and goal, why tech stack fits, high-level plan, detailed (expanded) plan, assumptions/out of scope, and a single "Next step" line at the end.
+
+### Markdown file structure (LLM-ready)
+
+- **Context and goal:** Tech stack, problem statement, real-world value, why-it-fits bullets.
+- **High-level implementation plan:** Original idea’s implementation_plan steps.
+- **Detailed implementation plan:** Extended plan from expand (main execution steps).
+- **Assumptions / Out of scope:** Explicit assumptions (e.g. "Assume Node 18+, local PostgreSQL") to reduce LLM hallucinations.
+- **Next step:** Single line at the end: "Start with: [first concrete action]."
 
 ### Instructions
 
-1. Add a small formatter (ideas list → markdown string) in a shared module or script.
-2. CLI: add `--output FILE` (or similar); when set, write markdown to file.
-3. API: add format option or endpoint; return markdown when requested.
-4. UI: add download action using the same formatter; trigger file save in browser.
+1. Add a shared formatter: (one idea dict + extended_plan list) → markdown string following the structure above. Include assumptions and "Next step" (e.g. derived from first extended step or generated).
+2. API: add `POST /export` with body `{"pid": int}`. Look up last ideas and expanded result for that pid; if not expanded, return 400. Return markdown with `Content-Type: text/markdown` and optional `Content-Disposition: attachment; filename="..."`.
+3. UI: for an idea that has been expanded, show "Download as Markdown" (or "Export"); call formatter and trigger browser download of the .md file (or call POST /export and save response as file).
+4. Document the export format (sections and assumptions/next-step) in README or ticket.
 
 ---
 
@@ -309,13 +316,13 @@ Add structured logging (request id, step, latency, errors) across the graph and 
 | DEVSTROM-V2-2   | Web context summarization (themes) | [ ]  | None          |
 | DEVSTROM-V2-3   | Multi-query web context            | [x]  | None          |
 | DEVSTROM-V2-4   | Configurable count + expand idea   | [x]  | None          |
-| DEVSTROM-V2-5   | Export (markdown, CLI, UI)         | [ ]  | None          |
+| DEVSTROM-V2-5   | Export one expanded idea as markdown | [x]  | None          |
 | DEVSTROM-V2-6   | Session history + persistence     | [ ]  | None          |
 | DEVSTROM-V2-7   | Shareable link (input params)     | [ ]  | None          |
 | DEVSTROM-V2-8   | Retry and schema validation       | [ ]  | None          |
 | DEVSTROM-V2-9   | Caching by input key              | [ ]  | None          |
 | DEVSTROM-V2-10  | Structured logging and tracing    | [ ]  | None          |
 
-**v2 progress:** [x] 3/10 complete
+**v2 progress:** [x] 4/10 complete
 
 Pick any ticket; complete and merge in any order. Preserve existing V1 functionality.

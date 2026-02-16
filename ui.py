@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from export_formatter import idea_to_markdown
 from graph import app as graph_app, expand_idea as graph_expand_idea
 
 st.set_page_config(page_title="Dev-Strom", page_icon="💡")
@@ -13,12 +14,13 @@ st.caption("Get curated project ideas for any tech stack or job role")
 
 tech_stack = st.text_input(
     "Tech stack or Job Role",
+    value="LangChain, LangGraph, Deep Agents",
     placeholder="e.g. LangChain, LangGraph, Deep Agents, etc.",
 )
-domain = st.text_input("Domain or Company (optional)", placeholder="e.g. Retail, Banking, Amazon, Walmart, etc.")
-level = st.text_input("Level (optional)", placeholder="e.g. beginner, portfolio, Sr. Software Engineer, etc.")
-enable_multi_query = st.checkbox("Enable multi-query search", value=False, help="Run 2-3 web queries and merge results for better coverage")
+domain = st.text_input("Domain or Company (optional)", value="Retail", placeholder="e.g. Retail, Banking, Amazon, Walmart, etc.")
+level = st.text_input("Level (optional)", value="beginner", placeholder="e.g. beginner, portfolio, Sr. Software Engineer, etc.")
 count = st.number_input("Number of ideas", min_value=1, max_value=5, value=3, step=1)
+enable_multi_query = st.checkbox("Enable multi-query search", value=True, help="Run 2-3 web queries and merge results for better coverage")
 
 def _idea_dict(idea):
     return idea if isinstance(idea, dict) else (idea.model_dump() if hasattr(idea, "model_dump") else {})
@@ -46,6 +48,7 @@ if st.button("Get ideas", type="primary"):
         st.error(f"Expected {count} ideas, got {len(ideas)}")
         st.stop()
     st.session_state["ideas"] = ideas
+    st.session_state["export_tech_stack"] = tech_stack.strip()
     for k in list(st.session_state.keys()):
         if k.startswith("expanded_"):
             del st.session_state[k]
@@ -88,3 +91,7 @@ if ideas:
                         st.write(f"{j}. {step}")
                 else:
                     st.warning("Could not generate extended plan.")
+                tech_for_export = st.session_state.get("export_tech_stack", "")
+                md = idea_to_markdown(d, ext, tech_for_export or None)
+                fname = (name.replace(" ", "_")[:50] or "idea") + ".md"
+                st.download_button("Download as Markdown", data=md, file_name=fname, mime="text/markdown", key=f"download_{i}")
