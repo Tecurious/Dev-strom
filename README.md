@@ -27,15 +27,21 @@ Edit `.env` and set:
 | Option | Command | Description |
 |--------|---------|-------------|
 | **UI** | `streamlit run ui.py` | Browser UI: enter tech stack, click "Get ideas", see 3 ideas. Easiest way to try it. |
-| **CLI** | `python scripts/run_graph.py "LangChain, LangGraph"` | Prints 3 ideas to the terminal. Add `--stream` to see state after each step; `--debug` for full traces. |
-| **API** | `uvicorn api:api --reload` | HTTP server on port 8000. `POST /ideas` with `{"tech_stack": "..."}` returns `{"ideas": [...]}`. |
+| **CLI** | `python scripts/run_graph.py "LangChain, LangGraph"` | Prints 3 ideas to the terminal. Add `--stream` to see state after each step; `--debug` for full traces. Optional: `--domain`, `--level`, `--enable-summarization`. |
+| **API** | `uvicorn api:api --reload` | HTTP server on port 8000. `POST /ideas` with `{"tech_stack": "..."}` returns `{"ideas": [...]}`. Optional fields: `domain`, `level`, `enable_summarization`. |
 
 **Example (API):**
 
 ```bash
 curl -X POST http://localhost:8000/ideas \
   -H "Content-Type: application/json" \
-  -d '{"tech_stack": "React, Node.js, PostgreSQL"}'
+  -d '{"tech_stack": "React, Node.js, PostgreSQL", "domain": "fintech", "enable_summarization": true}'
+```
+
+**Example (CLI with options):**
+
+```bash
+python scripts/run_graph.py "React, Node.js" --domain fintech --level beginner --enable-summarization
 ```
 
 **Docs (when API is running):** [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger), [http://localhost:8000/redoc](http://localhost:8000/redoc) (ReDoc).
@@ -63,6 +69,11 @@ User input: "LangChain, LangGraph"
 │    │  • Calls Tavily API                                                 │
 │    │  • Returns {"web_context": "..."}                                   │
 │    ▼                                                                     │
+│  [Optional: summarize_web_context(state)]                                │
+│    │  • If enable_summarization=true                                     │
+│    │  • Uses Deep Agent to summarize raw snippets into themes            │
+│    │  • Returns {"web_context": "themes summary..."}                     │
+│    ▼                                                                     │
 │  generate_ideas(state)                                                   │
 │    │  • Builds user_content = tech_stack + web_context                   │
 │    │  • Invokes Deep Agent (LangGraph internally)                        │
@@ -79,10 +90,11 @@ Final state: {tech_stack, web_context, ideas}
 
 **Step-by-step:**
 
-1. **Input:** User provides a tech stack string (e.g. via UI, CLI, or API).
+1. **Input:** User provides a tech stack string (e.g. via UI, CLI, or API). Optional: `domain`, `level`, `enable_summarization`.
 2. **fetch_web_context:** LangGraph node reads `tech_stack`, calls the LangChain web search tool (Tavily), writes snippets to `web_context` in state.
-3. **generate_ideas:** LangGraph node reads `tech_stack` and `web_context`, invokes the Deep Agent with a prompt; the agent returns JSON, which is parsed into 3 `ProjectIdea` objects and written to `ideas` in state.
-4. **Output:** Final state contains `tech_stack`, `web_context`, and `ideas` (exactly 3 project ideas).
+3. **[Optional] summarize_web_context:** If `enable_summarization=true`, a Deep Agent summarizes raw web snippets into a concise themes summary (trends, project types, key resources), overwriting `web_context` with the summary.
+4. **generate_ideas:** LangGraph node reads `tech_stack` and `web_context` (raw or summarized), invokes the Deep Agent with a prompt; the agent returns JSON, which is parsed into 3 `ProjectIdea` objects and written to `ideas` in state.
+5. **Output:** Final state contains `tech_stack`, `web_context`, and `ideas` (exactly 3 project ideas).
 
 ### Layers
 

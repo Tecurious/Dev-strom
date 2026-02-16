@@ -36,7 +36,7 @@ Add optional `domain` (e.g. fintech, dev tools) and `level` (e.g. beginner, port
 
 ## DEVSTROM-V2-2 — Web context summarization (themes)
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Feature  
 **Priority:** High  
@@ -48,11 +48,11 @@ Add an optional step that summarizes raw web snippets into a short **themes summ
 
 ### Acceptance criteria
 
-- [ ] Optional summarization is implemented (e.g. a new graph node or tool) that takes `web_context` and returns a short themes summary string; off by default or behind a flag/param.
-- [ ] When enabled: a dedicated step (node or inline before `generate_ideas`) uses Deep Agent or LLM to produce the themes summary; `generate_ideas` receives this summary as `web_context` (or a separate state key that the prompt uses).
-- [ ] When disabled: raw `web_context` is passed through as today; no change to V1 behavior.
-- [ ] No breaking change to API/CLI/UI; new behavior is opt-in (config or optional request param).
-- [ ] Document how to enable/configure summarization.
+- [x] Optional summarization is implemented (e.g. a new graph node or tool) that takes `web_context` and returns a short themes summary string; off by default or behind a flag/param.
+- [x] When enabled: a dedicated step (node or inline before `generate_ideas`) uses Deep Agent or LLM to produce the themes summary; `generate_ideas` receives this summary as `web_context` (or a separate state key that the prompt uses).
+- [x] When disabled: raw `web_context` is passed through as today; no change to V1 behavior.
+- [x] No breaking change to API/CLI/UI; new behavior is opt-in (config or optional request param).
+- [x] Document how to enable/configure summarization.
 
 ### Instructions
 
@@ -295,7 +295,7 @@ Add structured logging (request id, step, latency, errors) across the graph and 
 | Key             | Title                              | Done | Dependencies |
 |-----------------|------------------------------------|------|---------------|
 | DEVSTROM-V2-1   | Optional domain and level input    | [x]  | None          |
-| DEVSTROM-V2-2   | Web context summarization (themes) | [ ]  | None          |
+| DEVSTROM-V2-2   | Web context summarization (themes) | [x]  | None          |
 | DEVSTROM-V2-3   | Multi-query web context            | [ ]  | None          |
 | DEVSTROM-V2-4   | Configurable count + expand idea   | [ ]  | None          |
 | DEVSTROM-V2-5   | Export (markdown, CLI, UI)         | [ ]  | None          |
@@ -305,6 +305,6 @@ Add structured logging (request id, step, latency, errors) across the graph and 
 | DEVSTROM-V2-9   | Caching by input key              | [ ]  | None          |
 | DEVSTROM-V2-10  | Structured logging and tracing    | [ ]  | None          |
 
-**v2 progress:** [x] 1/10 complete
+**v2 progress:** [x] 2/10 complete
 
 Pick any ticket; complete and merge in any order. Preserve existing V1 functionality.
