@@ -29,7 +29,7 @@ The prompt tells the LLM to produce this shape; the API returns it; validation (
 
 - **web_search_project_ideas(tech_stack):** builds the query `"project ideas and tutorials for {tech_stack}"`, calls Tavily, returns a single string of snippets (up to 5 results, ~3k chars). Used by the **fetch_web_context** step to fill `web_context` in state. No orchestration—just “given a tech stack, return web snippets.”
 
-**Control** — *Orchestration*: what runs when, in what order, and what state is passed along. In v1 this is LangGraph (once implemented).
+**Control** — *Orchestration*: what runs when, in what order, and what state is passed along. Implemented in `graph.py` via LangGraph.
 
 - Holds **state:** `tech_stack` (input), `web_context` (filled by fetch), `ideas` (filled by generate).
 - Runs **nodes** in order: `fetch_web_context` → `generate_ideas`. No branching in v1.
@@ -48,6 +48,8 @@ cp .env.example .env       # then set OPENAI_API_KEY and TAVILY_API_KEY
 ```
 
 Set `TAVILY_API_KEY` in `.env` for web search (get one at https://tavily.com). Set `OPENAI_API_KEY` for the idea-generation agent.
+
+**Run the graph:** `python scripts/run_graph.py` or `python scripts/run_graph.py "Your, Tech, Stack"` (requires both API keys in `.env`).
 
 ## Schema
 
