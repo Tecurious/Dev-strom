@@ -93,7 +93,7 @@ Implement the LangGraph workflow with two nodes: `fetch_web_context` and `genera
 
 ## DEVSTROM-4 — Deep Agent integration and middleware
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Task  
 **Priority:** High  
@@ -105,10 +105,10 @@ Replace the plain LLM call in the `generate_ideas` node with a Deep Agent that r
 
 ### Acceptance criteria
 
-- [ ] The `generate_ideas` node uses a Deep Agent (e.g. `create_deep_agent`) instead of a raw LLM call. The agent has access to the prompt and any tools needed to produce the 3 ideas (e.g. no extra tools if the agent only needs to reason over context).
-- [ ] The agent is invoked with state (e.g. `tech_stack` and `web_context` passed as user message or structured input); the agent's response is parsed into the 3-idea schema and written to state `ideas`.
-- [ ] At least one middleware (e.g. `@wrap_tool_call` or equivalent) is attached to log or count agent actions; middleware is visible when the graph runs (e.g. console output or structured log).
-- [ ] End-to-end: running the graph with a real tech stack produces 3 ideas that match the schema and reflect the `web_context` (ideas are grounded in search results).
+- [x] The `generate_ideas` node uses a Deep Agent (e.g. `create_deep_agent`) instead of a raw LLM call. The agent has access to the prompt and any tools needed to produce the 3 ideas (e.g. no extra tools if the agent only needs to reason over context).
+- [x] The agent is invoked with state (e.g. `tech_stack` and `web_context` passed as user message or structured input); the agent's response is parsed into the 3-idea schema and written to state `ideas`.
+- [x] At least one middleware (e.g. `@wrap_tool_call` or equivalent) is attached to log or count agent actions; middleware is visible when the graph runs (e.g. console output or structured log).
+- [x] End-to-end: running the graph with a real tech stack produces 3 ideas that match the schema and reflect the `web_context` (ideas are grounded in search results).
 
 ### Instructions
 
@@ -156,7 +156,7 @@ Provide a single entry point for users: input a tech stack string and receive th
 | DEVSTROM-1   | Project setup and output schema    | [x]   | —            |
 | DEVSTROM-2   | Web search tool (LangChain)        | [x]   | DEVSTROM-1   |
 | DEVSTROM-3   | LangGraph (fetch + generate)       | [x]   | DEVSTROM-1, 2 |
-| DEVSTROM-4   | Deep Agent integration and middleware | [ ]  | DEVSTROM-3   |
+| DEVSTROM-4   | Deep Agent integration and middleware | [x]  | DEVSTROM-3   |
 | DEVSTROM-5   | CLI or FastAPI endpoint            | [ ]    | DEVSTROM-4   |
 
 **v1 progress:** [ ] All tickets complete
