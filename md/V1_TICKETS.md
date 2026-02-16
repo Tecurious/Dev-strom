@@ -2,7 +2,7 @@
 
 > **Check off tasks:** Change `[ ]` to `[x]` when done. In Cursor/VS Code, open Markdown preview (`Ctrl+Shift+V` / `Cmd+Shift+V`) and click the checkbox to toggle.
 
-Work through tickets in order (DEVSTROM-1 → DEVSTROM-5). Mark done in PLAN.md and here when complete.
+Work through tickets in order (DEVSTROM-1 → DEVSTROM-6). Mark done in PLAN.md and here when complete.
 
 ---
 
@@ -149,6 +149,32 @@ Provide a single entry point for users: input a tech stack string and receive th
 
 ---
 
+## DEVSTROM-6 — Streamlit UI for testing
+
+- [x] **Ticket completed**
+
+**Type:** Task  
+**Priority:** Medium  
+**Depends on:** DEVSTROM-5
+
+### Description
+
+Add a Streamlit browser UI so users can test the flow without curl or the CLI: enter a tech stack, click a button, and view the 3 ideas in a readable layout.
+
+### Acceptance criteria
+
+- [x] A Streamlit app (e.g. `ui.py`) provides a text input for tech stack and a "Get ideas" button.
+- [x] On submit, the app invokes the graph (same as API/CLI) and displays the 3 ideas with all schema fields (name, problem_statement, why_it_fits, real_world_value, implementation_plan).
+- [x] Run command documented (e.g. `streamlit run ui.py`). Streamlit added to requirements; README updated.
+
+### Instructions
+
+1. Add `streamlit` to `requirements.txt`.
+2. Create a Streamlit script that loads `.env`, imports the compiled graph, and provides a text input and button. On button click, call `graph_app.invoke({"tech_stack": ...})` and render the 3 ideas (e.g. in expanders or sections).
+3. Document in README how to run the UI (`streamlit run ui.py`). Update PLAN.md with the new deliverable (Streamlit UI).
+
+---
+
 ## Ticket summary
 
 | Key          | Title                              | Done   | Depends on   |
@@ -158,7 +184,8 @@ Provide a single entry point for users: input a tech stack string and receive th
 | DEVSTROM-3   | LangGraph (fetch + generate)       | [x]   | DEVSTROM-1, 2 |
 | DEVSTROM-4   | Deep Agent integration and middleware | [x]  | DEVSTROM-3   |
 | DEVSTROM-5   | CLI or FastAPI endpoint            | [x]    | DEVSTROM-4   |
+| DEVSTROM-6   | Streamlit UI for testing           | [x]    | DEVSTROM-5   |
 
-**v1 progress:** [x] All tickets complete
+**v1 progress:** [x] All tickets complete (including DEVSTROM-6)
 
 Mark tickets complete: check "Ticket completed" and the acceptance criteria for each ticket, and the matching row in the table above. Sync with [PLAN.md](PLAN.md) v1 Todo.

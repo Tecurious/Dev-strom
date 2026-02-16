@@ -39,6 +39,7 @@ User submits stack → **fetch web context** (mandatory) → generate 3 ideas us
 3. **LangGraph** — Graph with two nodes: `fetch_web_context` (uses web search tool, writes to state) and `generate_ideas` (reads `tech_stack` + `web_context`, writes `ideas`). Edges: start → fetch_web_context → generate_ideas → end.
 4. **Deep Agent in generate_ideas** — Replace plain LLM call with Deep Agent that takes state and returns 3 ideas in the agreed format; attach middleware.
 5. **CLI or FastAPI** — Single entry point: input tech stack string → run graph → return 3 ideas.
+6. **Streamlit UI** — Browser UI to test the flow: text input for tech stack, "Get ideas" button, display 3 ideas (problem, why it fits, real-world value, implementation plan). Run with `streamlit run ui.py`.
 
 ---
 
@@ -51,6 +52,7 @@ See [V1_TICKETS.md](V1_TICKETS.md) for Jira-style tickets with clear instruction
 - [x] DEVSTROM-3: LangGraph (fetch_web_context + generate_ideas)
 - [x] DEVSTROM-4: Deep Agent integration and middleware
 - [x] DEVSTROM-5: CLI or FastAPI endpoint
+- [x] DEVSTROM-6: Streamlit UI for testing
 
 ---
 
