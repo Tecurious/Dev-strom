@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 load_dotenv()
 
 from graph import app as graph_app, expand_idea as graph_expand_idea
+from export_formatter import idea_to_markdown
 
 
 class IdeasRequest(BaseModel):
@@ -21,7 +22,13 @@ class ExpandRequest(BaseModel):
     pid: int = Field(..., ge=1, description="ID of the idea to expand (from last POST /ideas response)")
 
 
+class ExportRequest(BaseModel):
+    pid: int = Field(..., ge=1, description="ID of the expanded idea to export (must have been expanded first)")
+
+
 _api_last_ideas: list[dict] = []
+_api_expanded_by_pid: dict[int, dict] = {}
+_api_last_tech_stack: str = ""
 
 
 api = FastAPI(title="Dev-Strom")
@@ -42,13 +49,15 @@ def post_ideas(body: IdeasRequest):
     ideas = result.get("ideas", [])
     if len(ideas) != body.count:
         raise HTTPException(status_code=500, detail=f"Expected {body.count} ideas from graph, got {len(ideas)}")
-    global _api_last_ideas
+    global _api_last_ideas, _api_expanded_by_pid, _api_last_tech_stack
     out = []
     for i, idea in enumerate(ideas, 1):
         d = idea if isinstance(idea, dict) else (idea.model_dump() if hasattr(idea, "model_dump") else {})
         d["pid"] = i
         out.append(d)
     _api_last_ideas = out
+    _api_expanded_by_pid = {}
+    _api_last_tech_stack = body.tech_stack
     return {"ideas": out}
 
 
@@ -64,4 +73,26 @@ def post_expand(body: ExpandRequest):
     idea = _api_last_ideas[body.pid - 1].copy()
     idea.pop("pid", None)
     result = graph_expand_idea(idea)
+    _api_expanded_by_pid[body.pid] = result
     return result
+
+
+@api.post("/export")
+def post_export(body: ExportRequest):
+    if body.pid not in _api_expanded_by_pid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Expand idea {body.pid} first (POST /expand with {{\"pid\": {body.pid}}}).",
+        )
+    expanded = _api_expanded_by_pid[body.pid]
+    idea = expanded.get("idea", {})
+    extended_plan = expanded.get("extended_plan", [])
+    md = idea_to_markdown(idea, extended_plan, _api_last_tech_stack or None)
+    name_slug = (idea.get("name") or "idea").replace(" ", "_")[:50]
+    filename = f"devstrom_{name_slug}.md"
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(
+        md,
+        media_type="text/markdown",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

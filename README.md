@@ -28,7 +28,7 @@ Edit `.env` and set:
 |--------|---------|-------------|
 | **UI** | `streamlit run ui.py` | Browser UI: enter tech stack, click "Get ideas", see 3 ideas. Easiest way to try it. |
 | **CLI** | `python scripts/run_graph.py "LangChain, LangGraph"` | Prints ideas to the terminal. Optional: `--count` (1-5, default 3), `--domain`, `--level`, `--enable-multi-query`. Add `--stream` or `--debug` for traces. |
-| **API** | `uvicorn api:api --reload` | HTTP server on port 8000. `POST /ideas` with `{"tech_stack": "..."}` returns `{"ideas": [...]}` (optional `count` 1-5). `POST /expand` with `{"pid": 1}` (idea ID from last `POST /ideas`) returns `{"idea", "extended_plan"}`. |
+| **API** | `uvicorn api:api --reload` | HTTP server on port 8000. `POST /ideas`, `POST /expand` (by pid), `POST /export` (expanded idea as markdown). |
 
 **Example (API):**
 
@@ -45,6 +45,17 @@ curl -X POST http://localhost:8000/expand \
   -H "Content-Type: application/json" \
   -d '{"pid": 1}'
 ```
+
+**Export one expanded idea as markdown (call POST /ideas, then POST /expand for that pid first):**
+
+```bash
+curl -X POST http://localhost:8000/export \
+  -H "Content-Type: application/json" \
+  -d '{"pid": 1}' \
+  -o idea.md
+```
+
+**Export format (LLM-ready):** The markdown file includes (1) Context and goal (tech stack, problem, value, why-it-fits), (2) High-level implementation plan, (3) Detailed implementation plan (from expand), (4) Assumptions / Out of scope, (5) Next step (first concrete action). Designed so an LLM can execute the project from the file without hallucinating.
 
 **Example (CLI with options):**
 
