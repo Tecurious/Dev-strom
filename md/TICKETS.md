@@ -34,7 +34,7 @@ Set up the Dev-Strom project environment and define the canonical output schema 
 
 ## DEVSTROM-2 — Web search tool (LangChain)
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Task  
 **Priority:** High  
@@ -46,10 +46,10 @@ Implement a LangChain tool that performs web search for project ideas and tutori
 
 ### Acceptance criteria
 
-- [ ] A LangChain tool (e.g. `@tool` or `StructuredTool`) exists that accepts a query string (or tech stack string from which a query is built) and returns a string of search results (snippets/summaries, not raw HTML).
-- [ ] The tool is callable in isolation: given a tech stack (e.g. "LangChain, LangGraph"), it returns non-empty text grounded in web results (e.g. from Tavily/Serper/DuckDuckGo).
-- [ ] API keys are read from environment; no hardcoded secrets.
-- [ ] Query construction is explicit (e.g. "project ideas for LangChain LangGraph", "tutorials for X") so the agent/graph can rely on consistent behavior.
+- [x] A LangChain tool (e.g. `@tool` or `StructuredTool`) exists that accepts a query string (or tech stack string from which a query is built) and returns a string of search results (snippets/summaries, not raw HTML).
+- [x] The tool is callable in isolation: given a tech stack (e.g. "LangChain, LangGraph"), it returns non-empty text grounded in web results (e.g. from Tavily/Serper/DuckDuckGo).
+- [x] API keys are read from environment; no hardcoded secrets.
+- [x] Query construction is explicit (e.g. "project ideas for LangChain LangGraph", "tutorials for X") so the agent/graph can rely on consistent behavior.
 
 ### Instructions
 
@@ -154,7 +154,7 @@ Provide a single entry point for users: input a tech stack string and receive th
 | Key          | Title                              | Done   | Depends on   |
 |--------------|------------------------------------|--------|--------------|
 | DEVSTROM-1   | Project setup and output schema    | [x]   | —            |
-| DEVSTROM-2   | Web search tool (LangChain)        | [ ]    | DEVSTROM-1   |
+| DEVSTROM-2   | Web search tool (LangChain)        | [x]   | DEVSTROM-1   |
 | DEVSTROM-3   | LangGraph (fetch + generate)       | [ ]    | DEVSTROM-1, 2 |
 | DEVSTROM-4   | Deep Agent integration and middleware | [ ]  | DEVSTROM-3   |
 | DEVSTROM-5   | CLI or FastAPI endpoint            | [ ]    | DEVSTROM-4   |

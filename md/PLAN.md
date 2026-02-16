@@ -47,7 +47,7 @@ User submits stack → **fetch web context** (mandatory) → generate 3 ideas us
 See [TICKETS.md](TICKETS.md) for Jira-style tickets with clear instructions. Summary:
 
 - [x] DEVSTROM-1: Project setup and output schema
-- [ ] DEVSTROM-2: Web search tool (LangChain)
+- [x] DEVSTROM-2: Web search tool (LangChain)
 - [ ] DEVSTROM-3: LangGraph (fetch_web_context + generate_ideas)
 - [ ] DEVSTROM-4: Deep Agent integration and middleware
 - [ ] DEVSTROM-5: CLI or FastAPI endpoint
