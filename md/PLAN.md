@@ -49,7 +49,7 @@ See [TICKETS.md](TICKETS.md) for Jira-style tickets with clear instructions. Sum
 - [x] DEVSTROM-1: Project setup and output schema
 - [x] DEVSTROM-2: Web search tool (LangChain)
 - [x] DEVSTROM-3: LangGraph (fetch_web_context + generate_ideas)
-- [ ] DEVSTROM-4: Deep Agent integration and middleware
+- [x] DEVSTROM-4: Deep Agent integration and middleware
 - [ ] DEVSTROM-5: CLI or FastAPI endpoint
 
 ---

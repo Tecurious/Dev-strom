@@ -2,8 +2,8 @@ import json
 import re
 from typing import TypedDict
 
-from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
+from deepagents import create_deep_agent
+from langchain.agents.middleware import wrap_model_call
 from langgraph.graph import END, START, StateGraph
 
 from schema import ProjectIdea
@@ -22,12 +22,27 @@ def fetch_web_context(state: DevStromState) -> dict:
     return {"web_context": result or ""}
 
 
-IDEAS_PROMPT = """You are a project-idea generator for developers learning a tech stack.
-Given the tech stack and web search context below, output exactly 3 concrete project ideas.
-Each idea must have: name, problem_statement (1-2 sentences), why_it_fits (list of short bullets, one per tech), real_world_value (one sentence), implementation_plan (list of 3-5 high-level steps).
-Output valid JSON only, in this exact shape (no markdown, no extra text):
+IDEAS_SYSTEM = """You are a project-idea generator for developers learning a tech stack.
+Output exactly 3 concrete project ideas as valid JSON only. Do not use any tools.
+Use this exact shape (no markdown, no extra text):
 {"ideas": [{"name": "...", "problem_statement": "...", "why_it_fits": ["...", "..."], "real_world_value": "...", "implementation_plan": ["...", "..."]}, ...]}
+Each idea: name, problem_statement (1-2 sentences), why_it_fits (list, one bullet per tech), real_world_value (one sentence), implementation_plan (list of 3-5 steps).
 """
+
+
+@wrap_model_call
+def log_model_call(request, handler):
+    print("[DevStrom middleware] model call (generate_ideas agent)")
+    return handler(request)
+
+
+_idea_agent = create_deep_agent(
+    name="idea_generator",
+    model="gpt-4o-mini",
+    tools=[],
+    system_prompt=IDEAS_SYSTEM,
+    middleware=[log_model_call],
+)
 
 
 def _parse_ideas_response(raw: str) -> list:
@@ -48,13 +63,12 @@ def _parse_ideas_response(raw: str) -> list:
 def generate_ideas(state: DevStromState) -> dict:
     tech_stack = state["tech_stack"]
     web_context = state["web_context"]
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
-    prompt = (
-        IDEAS_PROMPT
-        + f"\nTech stack: {tech_stack}\n\nWeb context:\n{web_context[:4000]}\n\nJSON output:\n"
-    )
-    response = llm.invoke([HumanMessage(content=prompt)])
-    content = response.content if hasattr(response, "content") else str(response)
+    user_content = f"Tech stack: {tech_stack}\n\nWeb context:\n{web_context[:4000]}\n\nOutput exactly 3 ideas as JSON:\n"
+    result = _idea_agent.invoke({
+        "messages": [{"role": "user", "content": user_content}],
+    })
+    messages = result.get("messages", [])
+    content = messages[-1].content if messages and hasattr(messages[-1], "content") else str(messages[-1]) if messages else ""
     ideas = _parse_ideas_response(content)
     if not ideas:
         ideas = [{"name": "", "problem_statement": "", "why_it_fits": [], "real_world_value": "", "implementation_plan": []}] * 3

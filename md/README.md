@@ -49,7 +49,7 @@ cp .env.example .env       # then set OPENAI_API_KEY and TAVILY_API_KEY
 
 Set `TAVILY_API_KEY` in `.env` for web search (get one at https://tavily.com). Set `OPENAI_API_KEY` for the idea-generation agent.
 
-**Run the graph:** `python scripts/run_graph.py` or `python scripts/run_graph.py "Your, Tech, Stack"` (requires both API keys in `.env`).
+**Run the graph:** `python scripts/run_graph.py` or `python scripts/run_graph.py "Your, Tech, Stack"` (requires both API keys in `.env`). Use `--stream` to see state after each node (fetch_web_context, then generate_ideas); use `--debug` to see detailed execution traces.
 
 ## Schema
 
