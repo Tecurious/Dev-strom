@@ -18,6 +18,7 @@ def main():
     parser.add_argument("--domain", default=None, help="Optional domain to bias ideas (e.g. fintech, dev tools)")
     parser.add_argument("--level", default=None, help="Optional level to bias ideas (e.g. beginner, portfolio)")
     parser.add_argument("--enable-multi-query", action="store_true", help="Enable multi-query web search (2-3 queries merged)")
+    parser.add_argument("--count", type=int, default=3, choices=range(1, 6), metavar="1-5", help="Number of ideas to generate (default: 3)")
     parser.add_argument("--stream", action="store_true", help="Stream graph steps and state after each node")
     parser.add_argument("--debug", action="store_true", help="Stream debug traces (node names, inputs, outputs)")
     args = parser.parse_args()
@@ -36,6 +37,7 @@ def main():
         inputs["level"] = args.level
     if args.enable_multi_query:
         inputs["enable_multi_query"] = True
+    inputs["count"] = args.count
 
     if args.debug:
         print("--- stream_mode=debug ---")
@@ -63,7 +65,7 @@ def main():
     result = app.invoke(inputs)
     assert result.get("web_context"), "web_context should be non-empty"
     ideas = result.get("ideas", [])
-    assert len(ideas) == 3, f"expected 3 ideas, got {len(ideas)}"
+    assert len(ideas) == args.count, f"expected {args.count} ideas, got {len(ideas)}"
 
     print("web_context length:", len(result["web_context"]))
     print("ideas count:", len(ideas))

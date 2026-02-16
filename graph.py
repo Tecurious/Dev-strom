@@ -20,6 +20,7 @@ class DevStromStateOptional(TypedDict, total=False):
     domain: str
     level: str
     enable_multi_query: bool
+    count: int
 
 
 class DevStromState(DevStromStateRequired, DevStromStateOptional):
@@ -43,7 +44,7 @@ IDEAS_SYSTEM = """You are a strictly-controlled project-idea generator for devel
 Follow these instructions exactly and obey all guardrails:
 
 1. Output MUST be valid JSON, using ONLY the exact shape below. Do NOT include markdown code fences, explanations, headings, or any extra text.
-2. Generate exactly 3 concrete project ideas. No more, no less.
+2. Generate exactly N concrete project ideas (N is given in the user message). No more, no less.
 3. Use THIS JSON shape, and nothing else:
 {
   "ideas": [
@@ -81,7 +82,7 @@ Follow these instructions exactly and obey all guardrails:
    - If Level = "Advanced" / "Architect": Focus on distributed systems patterns (CAP theorem, event sourcing, caching strategies, idempotency), scalability, reliability, and fault tolerance.
 
 7. DISTINCT IDEAS:
-   - All 3 ideas must be meaningfully different from each other (different core problem, architecture, or primary focus), even when using the same tech stack and domain.
+   - All N ideas must be meaningfully different from each other (different core problem, architecture, or primary focus), even when using the same tech stack and domain.
 
 8. STRICT GUARDRAILS:
    - NO markdown, code blocks, comments, or text before/after/beside the JSON.
@@ -118,7 +119,7 @@ def _get_idea_agent():
     return _idea_agent
 
 
-def _parse_ideas_response(raw: str) -> list:
+def _parse_ideas_response(raw: str, expected_count: int) -> list:
     raw = raw.strip()
     if raw.startswith("```"):
         raw = re.sub(r"^```(?:json)?\s*", "", raw)
@@ -126,7 +127,7 @@ def _parse_ideas_response(raw: str) -> list:
     try:
         data = json.loads(raw)
         ideas = data.get("ideas", [])
-        if len(ideas) != 3:
+        if len(ideas) != expected_count:
             return ideas
         return [ProjectIdea.model_validate(i) for i in ideas]
     except Exception:
@@ -138,21 +139,24 @@ def generate_ideas(state: DevStromState) -> dict:
     web_context = state["web_context"]
     domain = state.get("domain")
     level = state.get("level")
+    count = state.get("count", 3)
+    count = max(1, min(5, count))
     parts = [f"Tech stack: {tech_stack}"]
     if domain:
         parts.append(f"Domain (bias ideas toward): {domain}")
     if level:
         parts.append(f"Level (bias ideas toward): {level}")
-    parts.append(f"\nWeb context:\n{web_context[:4000]}\n\nOutput exactly 3 ideas as JSON:\n")
+    parts.append(f"\nWeb context:\n{web_context[:4000]}\n\nOutput exactly {count} ideas as JSON:\n")
     user_content = "\n".join(parts)
     result = _get_idea_agent().invoke({
         "messages": [{"role": "user", "content": user_content}],
     })
     messages = result.get("messages", [])
     content = messages[-1].content if messages and hasattr(messages[-1], "content") else str(messages[-1]) if messages else ""
-    ideas = _parse_ideas_response(content)
+    ideas = _parse_ideas_response(content, count)
     if not ideas:
-        ideas = [{"name": "", "problem_statement": "", "why_it_fits": [], "real_world_value": "", "implementation_plan": []}] * 3
+        empty = {"name": "", "problem_statement": "", "why_it_fits": [], "real_world_value": "", "implementation_plan": []}
+        ideas = [empty] * count
     return {"ideas": [i.model_dump() if hasattr(i, "model_dump") else i for i in ideas]}
 
 
@@ -164,6 +168,46 @@ def build_graph():
     graph.add_edge("fetch_web_context", "generate_ideas")
     graph.add_edge("generate_ideas", END)
     return graph.compile()
+
+
+EXPAND_SYSTEM = """You are an implementation advisor. Given a project idea (name, problem, tech fit, implementation_plan), output a deeper implementation plan: 5-10 more detailed, actionable steps or next steps that a developer could follow. Output valid JSON only, no markdown. Use this shape: {"extended_plan": ["Step 1: ...", "Step 2: ...", ...]}."""
+
+
+_expand_agent = None
+
+
+def _get_expand_agent():
+    global _expand_agent
+    if _expand_agent is None:
+        _expand_agent = create_deep_agent(
+            name="expand_idea",
+            model="gpt-5-mini",
+            tools=[],
+            system_prompt=EXPAND_SYSTEM,
+        )
+    return _expand_agent
+
+
+def expand_idea(idea: dict) -> dict:
+    idea_str = json.dumps(idea, indent=2)
+    user_content = f"Expand this project idea into a deeper implementation plan:\n\n{idea_str}"
+    result = _get_expand_agent().invoke({
+        "messages": [{"role": "user", "content": user_content}],
+    })
+    messages = result.get("messages", [])
+    content = messages[-1].content if messages and hasattr(messages[-1], "content") else str(messages[-1]) if messages else ""
+    content = content.strip()
+    if content.startswith("```"):
+        content = re.sub(r"^```(?:json)?\s*", "", content)
+        content = re.sub(r"\s*```$", "", content)
+    try:
+        data = json.loads(content)
+        steps = data.get("extended_plan", [])
+        if isinstance(steps, list):
+            return {"idea": idea, "extended_plan": [str(s) for s in steps]}
+    except Exception:
+        pass
+    return {"idea": idea, "extended_plan": []}
 
 
 app = build_graph()

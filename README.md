@@ -27,21 +27,29 @@ Edit `.env` and set:
 | Option | Command | Description |
 |--------|---------|-------------|
 | **UI** | `streamlit run ui.py` | Browser UI: enter tech stack, click "Get ideas", see 3 ideas. Easiest way to try it. |
-| **CLI** | `python scripts/run_graph.py "LangChain, LangGraph"` | Prints 3 ideas to the terminal. Add `--stream` to see state after each step; `--debug` for full traces. Optional: `--domain`, `--level`, `--enable-multi-query`. |
-| **API** | `uvicorn api:api --reload` | HTTP server on port 8000. `POST /ideas` with `{"tech_stack": "..."}` returns `{"ideas": [...]}`. Optional fields: `domain`, `level`, `enable_multi_query`. |
+| **CLI** | `python scripts/run_graph.py "LangChain, LangGraph"` | Prints ideas to the terminal. Optional: `--count` (1-5, default 3), `--domain`, `--level`, `--enable-multi-query`. Add `--stream` or `--debug` for traces. |
+| **API** | `uvicorn api:api --reload` | HTTP server on port 8000. `POST /ideas` with `{"tech_stack": "..."}` returns `{"ideas": [...]}` (optional `count` 1-5). `POST /expand` with `{"pid": 1}` (idea ID from last `POST /ideas`) returns `{"idea", "extended_plan"}`. |
 
 **Example (API):**
 
 ```bash
 curl -X POST http://localhost:8000/ideas \
   -H "Content-Type: application/json" \
-  -d '{"tech_stack": "React, Node.js, PostgreSQL", "domain": "fintech", "enable_multi_query": true}'
+  -d '{"tech_stack": "React, Node.js, PostgreSQL", "domain": "fintech", "enable_multi_query": true, "count": 5}'
+```
+
+**Expand one idea by PID (call POST /ideas first; then use pid 1–N):**
+
+```bash
+curl -X POST http://localhost:8000/expand \
+  -H "Content-Type: application/json" \
+  -d '{"pid": 1}'
 ```
 
 **Example (CLI with options):**
 
 ```bash
-python scripts/run_graph.py "React, Node.js" --domain fintech --level beginner --enable-multi-query
+python scripts/run_graph.py "React, Node.js" --count 5 --domain fintech --level beginner --enable-multi-query
 ```
 
 **Docs (when API is running):** [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger), [http://localhost:8000/redoc](http://localhost:8000/redoc) (ReDoc).

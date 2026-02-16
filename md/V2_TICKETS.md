@@ -106,7 +106,7 @@ Run 2–3 web search queries per run (e.g. "project ideas for {stack}", "{stack}
 
 ## DEVSTROM-V2-4 — Configurable idea count and expand one idea
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Feature  
 **Priority:** High  
@@ -114,14 +114,14 @@ Run 2–3 web search queries per run (e.g. "project ideas for {stack}", "{stack}
 
 ### Description
 
-Allow requesting a number of ideas other than 3 (e.g. 1–5) via an optional parameter. Add an "expand" flow: given one idea (e.g. by index or id), return a deeper implementation plan or next steps. Both are additive; default count remains 3.
+Allow requesting a number of ideas other than 3 (e.g. 1–5) via an optional parameter. Each idea in the API response is assigned a **PID** (1-based id). Add an "expand" flow: call `POST /expand` with `{"pid": 1}` (id from the last `POST /ideas` response) to get a deeper implementation plan or next steps for that idea. Both are additive; default count remains 3.
 
 ### Acceptance criteria
 
-- [ ] API/CLI/UI accept optional `count` (e.g. 1–5); default 3. Graph and schema support variable-length ideas list.
-- [ ] "Expand one idea" available as a separate endpoint or flow (e.g. `POST /expand` with idea payload or id); returns extended plan/steps.
-- [ ] When `count` is 3 and expand is not used, behavior matches V1.
-- [ ] Schema (e.g. `IdeasResponse`) allows variable list length; validation and prompts updated accordingly.
+- [x] API/CLI/UI accept optional `count` (e.g. 1–5); default 3. Graph and schema support variable-length ideas list.
+- [x] "Expand one idea" available as a separate endpoint or flow: `POST /expand` accepts `{"pid": 1}` (idea id from last `POST /ideas`); returns extended plan/steps. API assigns PID (1, 2, …) to each idea in the response.
+- [x] When `count` is 3 and expand is not used, behavior matches V1.
+- [x] Schema (e.g. `IdeasResponse`) allows variable list length; validation and prompts updated accordingly.
 
 ### Instructions
 
@@ -308,7 +308,7 @@ Add structured logging (request id, step, latency, errors) across the graph and 
 | DEVSTROM-V2-1   | Optional domain and level input    | [x]  | None          |
 | DEVSTROM-V2-2   | Web context summarization (themes) | [ ]  | None          |
 | DEVSTROM-V2-3   | Multi-query web context            | [x]  | None          |
-| DEVSTROM-V2-4   | Configurable count + expand idea   | [ ]  | None          |
+| DEVSTROM-V2-4   | Configurable count + expand idea   | [x]  | None          |
 | DEVSTROM-V2-5   | Export (markdown, CLI, UI)         | [ ]  | None          |
 | DEVSTROM-V2-6   | Session history + persistence     | [ ]  | None          |
 | DEVSTROM-V2-7   | Shareable link (input params)     | [ ]  | None          |
@@ -316,6 +316,6 @@ Add structured logging (request id, step, latency, errors) across the graph and 
 | DEVSTROM-V2-9   | Caching by input key              | [ ]  | None          |
 | DEVSTROM-V2-10  | Structured logging and tracing    | [ ]  | None          |
 
-**v2 progress:** [x] 2/10 complete
+**v2 progress:** [x] 3/10 complete
 
 Pick any ticket; complete and merge in any order. Preserve existing V1 functionality.

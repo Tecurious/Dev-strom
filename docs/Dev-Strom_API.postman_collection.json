@@ -1,0 +1,80 @@
+{
+	"info": {
+		"_postman_id": "dev-strom-api-collection",
+		"name": "Dev-Strom API",
+		"description": "Test Dev-Strom ideas and expand endpoints. Start the API with: `uvicorn api:api --reload`",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000"
+		}
+	],
+	"item": [
+		{
+			"name": "Ideas",
+			"item": [
+				{
+					"name": "POST /ideas (minimal)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tech_stack\": \"React, Node.js, PostgreSQL\"\n}"
+						},
+						"url": "{{baseUrl}}/ideas",
+						"description": "Get 3 project ideas (default count). Only tech_stack required."
+					}
+				},
+				{
+					"name": "POST /ideas (full options)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tech_stack\": \"LangChain, LangGraph\",\n  \"domain\": \"fintech\",\n  \"level\": \"intermediate\",\n  \"enable_multi_query\": true,\n  \"count\": 5\n}"
+						},
+						"url": "{{baseUrl}}/ideas",
+						"description": "Get 1-5 ideas with optional domain, level, and multi-query. count must be 1-5."
+					}
+				}
+			]
+		},
+		{
+			"name": "Expand",
+			"item": [
+				{
+					"name": "POST /expand",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"pid\": 1\n}"
+						},
+						"url": "{{baseUrl}}/expand",
+						"description": "Expand idea by PID. Call POST /ideas first; each idea has pid 1, 2, 3, ... Pass {\"pid\": 1} to expand the first idea. Returns { \"idea\", \"extended_plan\" }."
+					}
+				}
+			]
+		}
+	]
+}

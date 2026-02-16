@@ -10,4 +10,9 @@ class ProjectIdea(BaseModel):
 
 
 class IdeasResponse(BaseModel):
-    ideas: list[ProjectIdea] = Field(..., min_length=3, max_length=3)
+    ideas: list[ProjectIdea] = Field(..., min_length=1, max_length=5)
+
+
+class ExpandedIdea(BaseModel):
+    idea: ProjectIdea
+    extended_plan: list[str] = Field(..., description="Deeper implementation steps or next steps")
