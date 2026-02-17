@@ -10,39 +10,54 @@
 			"name": "1. Get Ideas",
 			"request": {
 				"method": "POST",
-				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
 				"body": {
 					"mode": "raw",
 					"raw": "{\n    \"tech_stack\": \"React, Node.js, PostgreSQL\",\n    \"domain\": \"\",\n    \"level\": \"\",\n    \"enable_multi_query\": true,\n    \"count\": 5\n}"
 				},
 				"url": "http://localhost:8000/ideas",
-				"description": "Required: tech_stack. Optional: domain, level (strings), enable_multi_query (bool), count (1-5, default 3)."
+				"description": "Required: tech_stack. Optional: domain, level (strings), enable_multi_query (bool), count (1-5, default 3). Response includes run_id; use it in Expand and Export."
 			}
 		},
 		{
 			"name": "2. Expand",
 			"request": {
 				"method": "POST",
-				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"pid\": 1\n}"
+					"raw": "{\n    \"run_id\": \"<paste run_id from Get Ideas response>\",\n    \"pid\": 1\n}"
 				},
 				"url": "http://localhost:8000/expand",
-				"description": "Call after Get Ideas. pid = idea id (1, 2, 3, ...)."
+				"description": "Call after Get Ideas. run_id from step 1; pid = idea id (1, 2, 3, ...)."
 			}
 		},
 		{
 			"name": "3. Export",
 			"request": {
 				"method": "POST",
-				"header": [{"key": "Content-Type", "value": "application/json"}],
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"pid\": 1\n}"
+					"raw": "{\n    \"run_id\": \"<paste run_id from Get Ideas response>\",\n    \"pid\": 1\n}"
 				},
 				"url": "http://localhost:8000/export",
-				"description": "Call after Expand. Returns markdown file for that idea."
+				"description": "Call after Expand. Same run_id; returns markdown file for that idea."
 			}
 		}
 	]
