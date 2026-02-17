@@ -1,4 +1,6 @@
 import os
+import uuid
+from collections import OrderedDict
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -19,16 +21,23 @@ class IdeasRequest(BaseModel):
 
 
 class ExpandRequest(BaseModel):
-    pid: int = Field(..., ge=1, description="ID of the idea to expand (from last POST /ideas response)")
+    run_id: str = Field(..., description="Run ID from POST /ideas response")
+    pid: int = Field(..., ge=1, description="ID of the idea to expand (1-based from that run)")
 
 
 class ExportRequest(BaseModel):
+    run_id: str = Field(..., description="Run ID from POST /ideas response")
     pid: int = Field(..., ge=1, description="ID of the expanded idea to export (must have been expanded first)")
 
 
-_api_last_ideas: list[dict] = []
-_api_expanded_by_pid: dict[int, dict] = {}
-_api_last_tech_stack: str = ""
+_MAX_RUNS = 100
+_run_store: OrderedDict[str, dict] = OrderedDict()
+
+
+def _get_run(run_id: str) -> dict:
+    if run_id not in _run_store:
+        raise HTTPException(status_code=404, detail=f"Run {run_id} not found. Call POST /ideas first and use the returned run_id.")
+    return _run_store[run_id]
 
 
 api = FastAPI(title="Dev-Strom")
@@ -49,45 +58,54 @@ def post_ideas(body: IdeasRequest):
     ideas = result.get("ideas", [])
     if len(ideas) != body.count:
         raise HTTPException(status_code=500, detail=f"Expected {body.count} ideas from graph, got {len(ideas)}")
-    global _api_last_ideas, _api_expanded_by_pid, _api_last_tech_stack
     out = []
     for i, idea in enumerate(ideas, 1):
         d = idea if isinstance(idea, dict) else (idea.model_dump() if hasattr(idea, "model_dump") else {})
         d["pid"] = i
         out.append(d)
-    _api_last_ideas = out
-    _api_expanded_by_pid = {}
-    _api_last_tech_stack = body.tech_stack
-    return {"ideas": out}
+    run_id = str(uuid.uuid4())
+    while len(_run_store) >= _MAX_RUNS:
+        _run_store.popitem(last=False)
+    _run_store[run_id] = {
+        "ideas": out,
+        "expanded_by_pid": {},
+        "tech_stack": body.tech_stack,
+    }
+    _run_store.move_to_end(run_id)
+    return {"ideas": out, "run_id": run_id}
 
 
 @api.post("/expand")
 def post_expand(body: ExpandRequest):
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(status_code=503, detail="Set OPENAI_API_KEY in .env")
-    if body.pid < 1 or body.pid > len(_api_last_ideas):
+    run = _get_run(body.run_id)
+    ideas = run["ideas"]
+    if body.pid < 1 or body.pid > len(ideas):
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid pid. Call POST /ideas first; pid must be 1–{len(_api_last_ideas) or 1}.",
+            detail=f"Invalid pid. Use pid 1–{len(ideas)} for this run.",
         )
-    idea = _api_last_ideas[body.pid - 1].copy()
+    idea = ideas[body.pid - 1].copy()
     idea.pop("pid", None)
     result = graph_expand_idea(idea)
-    _api_expanded_by_pid[body.pid] = result
+    run["expanded_by_pid"][body.pid] = result
     return result
 
 
 @api.post("/export")
 def post_export(body: ExportRequest):
-    if body.pid not in _api_expanded_by_pid:
+    run = _get_run(body.run_id)
+    expanded_by_pid = run["expanded_by_pid"]
+    if body.pid not in expanded_by_pid:
         raise HTTPException(
             status_code=400,
-            detail=f"Expand idea {body.pid} first (POST /expand with {{\"pid\": {body.pid}}}).",
+            detail=f"Expand idea {body.pid} first (POST /expand with {{\"run_id\": \"...\", \"pid\": {body.pid}}}).",
         )
-    expanded = _api_expanded_by_pid[body.pid]
+    expanded = expanded_by_pid[body.pid]
     idea = expanded.get("idea", {})
     extended_plan = expanded.get("extended_plan", [])
-    md = idea_to_markdown(idea, extended_plan, _api_last_tech_stack or None)
+    md = idea_to_markdown(idea, extended_plan, run.get("tech_stack") or None)
     name_slug = (idea.get("name") or "idea").replace(" ", "_")[:50]
     filename = f"devstrom_{name_slug}.md"
     from fastapi.responses import PlainTextResponse

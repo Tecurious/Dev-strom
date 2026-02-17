@@ -38,20 +38,22 @@ curl -X POST http://localhost:8000/ideas \
   -d '{"tech_stack": "React, Node.js, PostgreSQL", "domain": "fintech", "enable_multi_query": true, "count": 5}'
 ```
 
-**Expand one idea by PID (call POST /ideas first; then use pid 1–N):**
+The response includes `run_id`; use it for expand and export so concurrent clients do not overwrite each other's state.
+
+**Expand one idea by PID (use run_id from POST /ideas; pid 1–N):**
 
 ```bash
 curl -X POST http://localhost:8000/expand \
   -H "Content-Type: application/json" \
-  -d '{"pid": 1}'
+  -d '{"run_id": "<run_id from ideas response>", "pid": 1}'
 ```
 
-**Export one expanded idea as markdown (call POST /ideas, then POST /expand for that pid first):**
+**Export one expanded idea as markdown (call POST /expand for that pid first; use same run_id):**
 
 ```bash
 curl -X POST http://localhost:8000/export \
   -H "Content-Type: application/json" \
-  -d '{"pid": 1}' \
+  -d '{"run_id": "<run_id from ideas response>", "pid": 1}' \
   -o idea.md
 ```
 
