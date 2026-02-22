@@ -170,6 +170,9 @@ Allow the user to export **one expanded idea** (the idea they chose to go ahead 
 
 - [ ] **Ticket completed**
 
+> ⏭️ **SKIPPED — Absorbed into V3 as DEVSTROM-V3-10 (backend) and DEVSTROM-V3-11 (UI).**
+> V3 implements full per-user history backed by PostgreSQL. No V2 implementation needed.
+
 **Type:** Feature  
 **Priority:** Medium  
 **Depends on:** None
@@ -199,6 +202,9 @@ Persist runs (input + output) so users can view past results. Use a simple store
 
 - [ ] **Ticket completed**
 
+> ❌ **DROPPED — Not needed at this stage.**
+> Deprioritised in favour of V3 platform features. May be revisited in V4 if needed.
+
 **Type:** Feature  
 **Priority:** Medium  
 **Depends on:** None
@@ -225,6 +231,9 @@ Generate a URL that encodes the current input (tech_stack and optional domain, l
 ## DEVSTROM-V2-8 — Retry and schema validation
 
 - [ ] **Ticket completed**
+
+> ❌ **DROPPED — Not needed right now.**
+> Basic validation via Pydantic already exists. Full retry logic deferred; not worth the complexity before V3 auth/DB work.
 
 **Type:** Task  
 **Priority:** High  
@@ -253,6 +262,9 @@ Add retry logic when idea parsing fails (e.g. invalid JSON or wrong shape) and v
 ## DEVSTROM-V2-9 — Caching (by input key)
 
 - [ ] **Ticket completed**
+
+> ⏭️ **SKIPPED — Absorbed into V3 as DEVSTROM-V3-16.**
+> V3 implements per-user TTL caching with `cachetools` keyed by `user_id + input params`. No V2 implementation needed.
 
 **Type:** Task  
 **Priority:** Medium  
@@ -283,6 +295,9 @@ Cache graph results keyed by (tech_stack, domain?, level?) so identical requests
 
 - [ ] **Ticket completed**
 
+> ❌ **DROPPED — Premature at this stage.**
+> Structured logging adds overhead without a clear production need right now. Can be revisited in V4 alongside Redis and observability tooling.
+
 **Type:** Task  
 **Priority:** Medium  
 **Depends on:** None
@@ -310,19 +325,19 @@ Add structured logging (request id, step, latency, errors) across the graph and 
 
 ## Ticket summary (v2)
 
-| Key             | Title                              | Done | Dependencies |
-|-----------------|------------------------------------|------|---------------|
-| DEVSTROM-V2-1   | Optional domain and level input    | [x]  | None          |
-| DEVSTROM-V2-2   | Web context summarization (themes) | [ ]  | None          |
-| DEVSTROM-V2-3   | Multi-query web context            | [x]  | None          |
-| DEVSTROM-V2-4   | Configurable count + expand idea   | [x]  | None          |
-| DEVSTROM-V2-5   | Export one expanded idea as markdown | [x]  | None          |
-| DEVSTROM-V2-6   | Session history + persistence     | [ ]  | None          |
-| DEVSTROM-V2-7   | Shareable link (input params)     | [ ]  | None          |
-| DEVSTROM-V2-8   | Retry and schema validation       | [ ]  | None          |
-| DEVSTROM-V2-9   | Caching by input key              | [ ]  | None          |
-| DEVSTROM-V2-10  | Structured logging and tracing    | [ ]  | None          |
+| Key             | Title                               | Status                                   |
+|-----------------|-------------------------------------|------------------------------------------|
+| DEVSTROM-V2-1   | Optional domain and level input     | ✅ Done                                   |
+| DEVSTROM-V2-2   | Web context summarization (themes)  | ⏸️ Pending quality evaluation            |
+| DEVSTROM-V2-3   | Multi-query web context             | ✅ Done                                   |
+| DEVSTROM-V2-4   | Configurable count + expand idea    | ✅ Done                                   |
+| DEVSTROM-V2-5   | Export expanded idea as markdown    | ✅ Done                                   |
+| DEVSTROM-V2-6   | Session history + persistence       | ⏭️ Skipped → V3-10 + V3-11              |
+| DEVSTROM-V2-7   | Shareable link (input params)       | ❌ Dropped                                |
+| DEVSTROM-V2-8   | Retry and schema validation         | ❌ Dropped                                |
+| DEVSTROM-V2-9   | Caching by input key                | ⏭️ Skipped → V3-16                      |
+| DEVSTROM-V2-10  | Structured logging and tracing      | ❌ Dropped                                |
 
-**v2 progress:** [x] 4/10 complete
+**V2 final state: 4 done · 1 pending eval · 2 absorbed into V3 · 3 dropped**
 
-Pick any ticket; complete and merge in any order. Preserve existing V1 functionality.
+V2 is closed. All further development continues in V3.

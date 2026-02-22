@@ -41,8 +41,14 @@ if st.button("Get ideas", type="primary"):
     if enable_multi_query:
         inputs["enable_multi_query"] = True
     inputs["count"] = int(count)
+    
+    @st.cache_data(show_spinner=False)
+    def _run_graph_cached(graph_inputs: dict) -> dict:
+        return graph_app.invoke(graph_inputs)
+
     with st.spinner("Fetching web context and generating ideas…"):
-        result = graph_app.invoke(inputs)
+        result = _run_graph_cached(inputs)
+        
     ideas = result.get("ideas", [])
     if len(ideas) != int(count):
         st.error(f"Expected {count} ideas, got {len(ideas)}")

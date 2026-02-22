@@ -1,5 +1,6 @@
 import json
 import re
+from functools import lru_cache
 from typing import TypedDict
 
 from deepagents import create_deep_agent
@@ -10,10 +11,12 @@ from schema import ProjectIdea
 from tools import web_search_project_ideas
 
 
+# ── state ─────────────────────────────────────────────────────────────────────
+
 class DevStromStateRequired(TypedDict):
     tech_stack: str
     web_context: str
-    ideas: list
+    ideas: list[dict]
 
 
 class DevStromStateOptional(TypedDict, total=False):
@@ -27,19 +30,66 @@ class DevStromState(DevStromStateRequired, DevStromStateOptional):
     pass
 
 
-def fetch_web_context(state: DevStromState) -> dict:
-    tech_stack = state["tech_stack"]
-    enable_multi_query = state.get("enable_multi_query", False)
-    domain = state.get("domain")
-    result = web_search_project_ideas.invoke({
-        "tech_stack": tech_stack,
-        "enable_multi_query": enable_multi_query,
-        "domain": domain,
-    })
-    return {"web_context": result or ""}
+# ── shared helpers ────────────────────────────────────────────────────────────
+
+# Anchored to string start/end only (no re.MULTILINE — that would match mid-JSON newlines)
+_FENCE_RE_START = re.compile(r"\A```(?:json)?\s*")
+_FENCE_RE_END = re.compile(r"\s*```\Z")
 
 
-IDEAS_SYSTEM = """You are a strictly-controlled project-idea generator for developers learning a tech stack.
+def _strip_markdown_fences(text: str) -> str:
+    """Remove optional ``` / ```json fences that some models wrap JSON in."""
+    text = text.strip()
+    if text.startswith("```"):
+        text = _FENCE_RE_START.sub("", text, count=1)
+        text = _FENCE_RE_END.sub("", text, count=1)
+    return text.strip()
+
+
+def _extract_last_content(result: dict) -> str:
+    """Pull the string content from the last message in an agent result."""
+    messages = result.get("messages", [])
+    if not messages:
+        return ""
+    last = messages[-1]
+    return last.content if hasattr(last, "content") else str(last)
+
+
+# ── agent singletons (created once, reused) ───────────────────────────────────
+
+@wrap_model_call
+def _log_model_call(request, handler):
+    print("[DevStrom middleware] model call (generate_ideas agent)")
+    print(_get_idea_agent.cache_info()) 
+    print(_get_expand_agent.cache_info()) 
+    return handler(request)
+
+
+@lru_cache(maxsize=None)
+def _get_idea_agent():
+    return create_deep_agent(
+        name="idea_generator",
+        model="gpt-5-mini",
+        tools=[],
+        system_prompt=_IDEAS_SYSTEM,
+        middleware=[_log_model_call],
+    )
+
+
+@lru_cache(maxsize=None)
+def _get_expand_agent():
+    return create_deep_agent(
+        name="expand_idea",
+        model="gpt-5-mini",
+        tools=[],
+        system_prompt=_EXPAND_SYSTEM,
+    )
+
+
+# ── system prompts ────────────────────────────────────────────────────────────
+
+_IDEAS_SYSTEM = """\
+You are a strictly-controlled project-idea generator for developers learning a tech stack.
 
 Follow these instructions exactly and obey all guardrails:
 
@@ -93,43 +143,44 @@ Follow these instructions exactly and obey all guardrails:
 
 9. HALLUCINATION CHECK:
    - Do NOT suggest technologies that do not exist (e.g. "Apache Wifi").
-   - Ensure each "problem_statement" describes a solvable engineering problem, not a physical impossibility (e.g. do not suggest "Track inventory using WiFi signals alone").
+   - Ensure each "problem_statement" describes a solvable engineering problem, not a physical impossibility.
 """
 
+_EXPAND_SYSTEM = """\
+You are an implementation advisor. Given a project idea (name, problem, tech fit, implementation_plan), \
+output a deeper implementation plan: 5-10 more detailed, actionable steps that a developer could follow. \
+Output valid JSON only, no markdown. \
+Use this shape: {"extended_plan": ["Step 1: ...", "Step 2: ...", ...]}.\
+"""
 
-@wrap_model_call
-def log_model_call(request, handler):
-    print("[DevStrom middleware] model call (generate_ideas agent)")
-    return handler(request)
-
-
-_idea_agent = None
-
-
-def _get_idea_agent():
-    global _idea_agent
-    if _idea_agent is None:
-        _idea_agent = create_deep_agent(
-            name="idea_generator",
-            model="gpt-5-mini",
-            tools=[],
-            system_prompt=IDEAS_SYSTEM,
-            middleware=[log_model_call],
-        )
-    return _idea_agent
+_EMPTY_IDEA: dict = {
+    "name": "",
+    "problem_statement": "",
+    "why_it_fits": [],
+    "real_world_value": "",
+    "implementation_plan": [],
+}
 
 
-def _parse_ideas_response(raw: str, expected_count: int) -> list:
-    raw = raw.strip()
-    if raw.startswith("```"):
-        raw = re.sub(r"^```(?:json)?\s*", "", raw)
-        raw = re.sub(r"\s*```$", "", raw)
+# ── graph nodes ───────────────────────────────────────────────────────────────
+
+def fetch_web_context(state: DevStromState) -> dict:
+    result = web_search_project_ideas.invoke({
+        "tech_stack": state["tech_stack"],
+        "enable_multi_query": state.get("enable_multi_query", False),
+        "domain": state.get("domain"),
+    })
+    return {"web_context": result or ""}
+
+
+def _parse_ideas(raw: str, expected_count: int) -> list[dict]:
+    """Parse and validate the LLM JSON response into a list of idea dicts."""
+    raw = _strip_markdown_fences(raw)
     try:
         data = json.loads(raw)
         ideas = data.get("ideas", [])
-        if len(ideas) != expected_count:
-            return ideas
-        return [ProjectIdea.model_validate(i) for i in ideas]
+        validated = [ProjectIdea.model_validate(i).model_dump() for i in ideas]
+        return validated  # may be shorter/longer than expected_count; caller decides
     except Exception:
         return []
 
@@ -137,28 +188,47 @@ def _parse_ideas_response(raw: str, expected_count: int) -> list:
 def generate_ideas(state: DevStromState) -> dict:
     tech_stack = state["tech_stack"]
     web_context = state["web_context"]
-    domain = state.get("domain")
-    level = state.get("level")
-    count = state.get("count", 3)
-    count = max(1, min(5, count))
+    count = max(1, min(5, state.get("count", 3)))
+
     parts = [f"Tech stack: {tech_stack}"]
-    if domain:
+    if domain := state.get("domain"):
         parts.append(f"Domain (bias ideas toward): {domain}")
-    if level:
+    if level := state.get("level"):
         parts.append(f"Level (bias ideas toward): {level}")
     parts.append(f"\nWeb context:\n{web_context[:4000]}\n\nOutput exactly {count} ideas as JSON:\n")
-    user_content = "\n".join(parts)
+
     result = _get_idea_agent().invoke({
+        "messages": [{"role": "user", "content": "\n".join(parts)}],
+    })
+
+    ideas = _parse_ideas(_extract_last_content(result), count)
+    if not ideas:
+        ideas = [_EMPTY_IDEA.copy() for _ in range(count)]
+
+    return {"ideas": ideas}
+
+
+# ── standalone utility (not part of the compiled graph) ──────────────────────
+
+def expand_idea(idea: dict) -> dict:
+    """Expand a single project idea into a deeper implementation plan."""
+    user_content = f"Expand this project idea into a deeper implementation plan:\n\n{json.dumps(idea, indent=2)}"
+    result = _get_expand_agent().invoke({
         "messages": [{"role": "user", "content": user_content}],
     })
-    messages = result.get("messages", [])
-    content = messages[-1].content if messages and hasattr(messages[-1], "content") else str(messages[-1]) if messages else ""
-    ideas = _parse_ideas_response(content, count)
-    if not ideas:
-        empty = {"name": "", "problem_statement": "", "why_it_fits": [], "real_world_value": "", "implementation_plan": []}
-        ideas = [empty] * count
-    return {"ideas": [i.model_dump() if hasattr(i, "model_dump") else i for i in ideas]}
 
+    content = _strip_markdown_fences(_extract_last_content(result))
+    try:
+        data = json.loads(content)
+        steps = data.get("extended_plan", [])
+        if isinstance(steps, list):
+            return {"idea": idea, "extended_plan": [str(s) for s in steps]}
+    except Exception:
+        pass
+    return {"idea": idea, "extended_plan": []}
+
+
+# ── graph assembly ────────────────────────────────────────────────────────────
 
 def build_graph():
     graph = StateGraph(DevStromState)
@@ -168,46 +238,6 @@ def build_graph():
     graph.add_edge("fetch_web_context", "generate_ideas")
     graph.add_edge("generate_ideas", END)
     return graph.compile()
-
-
-EXPAND_SYSTEM = """You are an implementation advisor. Given a project idea (name, problem, tech fit, implementation_plan), output a deeper implementation plan: 5-10 more detailed, actionable steps or next steps that a developer could follow. Output valid JSON only, no markdown. Use this shape: {"extended_plan": ["Step 1: ...", "Step 2: ...", ...]}."""
-
-
-_expand_agent = None
-
-
-def _get_expand_agent():
-    global _expand_agent
-    if _expand_agent is None:
-        _expand_agent = create_deep_agent(
-            name="expand_idea",
-            model="gpt-5-mini",
-            tools=[],
-            system_prompt=EXPAND_SYSTEM,
-        )
-    return _expand_agent
-
-
-def expand_idea(idea: dict) -> dict:
-    idea_str = json.dumps(idea, indent=2)
-    user_content = f"Expand this project idea into a deeper implementation plan:\n\n{idea_str}"
-    result = _get_expand_agent().invoke({
-        "messages": [{"role": "user", "content": user_content}],
-    })
-    messages = result.get("messages", [])
-    content = messages[-1].content if messages and hasattr(messages[-1], "content") else str(messages[-1]) if messages else ""
-    content = content.strip()
-    if content.startswith("```"):
-        content = re.sub(r"^```(?:json)?\s*", "", content)
-        content = re.sub(r"\s*```$", "", content)
-    try:
-        data = json.loads(content)
-        steps = data.get("extended_plan", [])
-        if isinstance(steps, list):
-            return {"idea": idea, "extended_plan": [str(s) for s in steps]}
-    except Exception:
-        pass
-    return {"idea": idea, "extended_plan": []}
 
 
 app = build_graph()
