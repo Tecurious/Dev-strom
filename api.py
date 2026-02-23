@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from models.dto import IdeasRequest, ExpandRequest, ExportRequest
 
 load_dotenv()
 
@@ -12,22 +12,7 @@ from graph import app as graph_app, expand_idea as graph_expand_idea
 from export_formatter import idea_to_markdown
 
 
-class IdeasRequest(BaseModel):
-    tech_stack: str
-    domain: str | None = None
-    level: str | None = None
-    enable_multi_query: bool = False
-    count: int = Field(default=3, ge=1, le=5)
 
-
-class ExpandRequest(BaseModel):
-    run_id: str = Field(..., description="Run ID from POST /ideas response")
-    pid: int = Field(..., ge=1, description="ID of the idea to expand (1-based from that run)")
-
-
-class ExportRequest(BaseModel):
-    run_id: str = Field(..., description="Run ID from POST /ideas response")
-    pid: int = Field(..., ge=1, description="ID of the expanded idea to export (must have been expanded first)")
 
 
 _MAX_RUNS = 100
