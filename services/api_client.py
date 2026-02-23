@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-_BASE = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 # ── shared request helper ──────────────────────────────────────────────────────
 
@@ -19,7 +19,7 @@ def _post(path: str, payload: dict, *, timeout: int = 120) -> dict:
     Raises httpx.HTTPStatusError on non-2xx responses so callers can surface
     the error message without knowing HTTP details.
     """
-    url = f"{_BASE}{path}"
+    url = f"{API_BASE_URL}{path}"
     response = httpx.post(url, json=payload, timeout=timeout)
     response.raise_for_status()
     return response.json()
