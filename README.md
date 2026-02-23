@@ -17,8 +17,12 @@ cp .env.example .env
 
 Edit `.env` and set:
 
-- **OPENAI_API_KEY** — for the idea-generation agent ([OpenAI](https://platform.openai.com/api-keys))
-- **TAVILY_API_KEY** — for web search ([Tavily](https://tavily.com))
+| Variable | Required | Description |
+|---|---|---|
+| `OPENAI_API_KEY` | Yes | For the idea-generation agent ([OpenAI](https://platform.openai.com/api-keys)) |
+| `TAVILY_API_KEY` | Yes | For web search ([Tavily](https://tavily.com)) |
+| `API_BASE_URL` | No | FastAPI base URL for Streamlit (default: `http://localhost:8000`) |
+| `DATABASE_URL` | V3+ | PostgreSQL connection string (see [Database setup](#database-setup-v3)) |
 
 ---
 
@@ -26,9 +30,11 @@ Edit `.env` and set:
 
 | Option | Command | Description |
 |--------|---------|-------------|
-| **UI** | `streamlit run ui.py` | Browser UI: enter tech stack, get 1–5 ideas, expand any idea, download as markdown. Easiest way to try it. |
-| **CLI** | `python scripts/run_graph.py "LangChain, LangGraph"` | Prints ideas to the terminal. Optional: `--count` (1–5, default 3), `--domain`, `--level`, `--enable-multi-query`. Add `--stream` or `--debug` for traces. |
-| **API** | `uvicorn api:api --reload` | HTTP server on port 8000. `POST /ideas` (returns `run_id`), `POST /expand` and `POST /export` (require `run_id` + `pid`) so concurrent clients stay isolated. |
+| **UI** | `streamlit run ui.py` | Browser UI on port 8501. Requires FastAPI to be running first. |
+| **API** | `uvicorn api:api --reload` | HTTP server on port 8000. Must be running for the UI to work. |
+| **CLI** | `python scripts/run_graph.py "LangChain, LangGraph"` | Prints ideas to the terminal. Optional: `--count` (1–5), `--domain`, `--level`, `--enable-multi-query`, `--stream`, `--debug`. |
+
+> **Note:** From V3-1 onwards, Streamlit calls FastAPI over HTTP. You must start **both** servers.
 
 **Example (API):**
 
@@ -131,21 +137,62 @@ Final state: {tech_stack, web_context, ideas}
 
 | Path | Purpose |
 |------|---------|
-| `graph.py` | LangGraph definition: state, `fetch_web_context`, `generate_ideas`, `expand_idea`; compiled app. |
+| `graph.py` | LangGraph pipeline: state, `fetch_web_context`, `generate_ideas`, `expand_idea`. |
 | `tools.py` | LangChain web search tool (Tavily). |
-| `schema.py` | Pydantic models: `ProjectIdea`, `IdeasResponse`. |
-| `api.py` | FastAPI app: `POST /ideas` (returns `run_id`), `POST /expand`, `POST /export` (run-scoped by `run_id`). |
-| `export_formatter.py` | Idea + extended plan → LLM-ready markdown for export. |
-| `ui.py` | Streamlit app: get ideas, expand, download as markdown. |
-| `scripts/run_graph.py` | CLI entry point. |
-| `md/PLAN.md` | Project plan and v1 scope. |
-| `md/V1_TICKETS.md` | Jira-style tickets (DEVSTROM-1 … DEVSTROM-6). |
-| `md/V2_TICKETS.md` | V2 tickets (optional domain/level, expand, export, multi-query, etc.). |
-| `md/BACKLOG.md` | Backlog items and future ideas. |
+| `api.py` | FastAPI server: `POST /ideas`, `POST /expand`, `POST /export`. |
+| `ui.py` | Streamlit UI: generate, expand, download. |
+| `models/domain.py` | AI output models: `ProjectIdea`, `IdeasResponse`, `ExpandedIdea`. |
+| `models/dto.py` | HTTP request DTOs: `IdeasRequest`, `ExpandRequest`, `ExportRequest`. |
+| `services/api_client.py` | HTTP client used by Streamlit to call FastAPI. |
+| `services/db.py` | SQLAlchemy engine, session factory, `get_session()` context manager. |
+| `services/export_formatter.py` | Idea + extended plan → LLM-ready Markdown for download. |
+| `scripts/run_graph.py` | CLI entry point with `--stream` and `--debug` flags. |
+| `scripts/test_web_search.py` | Smoke-tests the Tavily search tool in isolation. |
+| `md/PLAN.md` | Full architecture plan (V1 → V3). |
+| `md/V1_TICKETS.md` | V1 Jira-style tickets. |
+| `md/V2_TICKETS.md` | V2 tickets (expand, export, multi-query, etc.). |
+| `md/V3_TICKETS.md` | V3 tickets (auth, DB, RAG, MCP, React). |
 | `docs/Dev-Strom_API.postman_collection.json` | Postman collection for the API. |
+
+---
+
+## Database setup (V3)
+
+Dev-Strom V3 uses PostgreSQL with the `pgvector` extension. Run the database using Docker:
+
+```bash
+# The project uses the pgvector/pgvector:pg16 image (pgvector pre-installed)
+docker run -d \
+  --name devstrom-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=devstrom \
+  -e POSTGRES_DB=devstrom \
+  -p 5432:5432 \
+  pgvector/pgvector:pg16
+```
+
+Then add to `.env`:
+
+```
+DATABASE_URL=postgresql://postgres:devstrom@localhost:5432/devstrom
+```
+
+**Verify the connection:**
+
+```bash
+source .venv/bin/activate
+python -c "from services.db import ping; print(ping()[:60])"
+# Expected: PostgreSQL 16.x (Debian...) on x86_64-pc-linux-gnu...
+```
+
+**Enable pgvector inside the database (one-time):**
+
+```bash
+docker exec -it devstrom-postgres psql -U postgres -d devstrom -c "CREATE EXTENSION IF NOT EXISTS vector;"
+```
 
 ---
 
 ## License and docs
 
-- **Plan and tickets:** [md/PLAN.md](md/PLAN.md), [md/V1_TICKETS.md](md/V1_TICKETS.md), [md/V2_TICKETS.md](md/V2_TICKETS.md), [md/BACKLOG.md](md/BACKLOG.md)
+- **Plan and tickets:** [md/PLAN.md](md/PLAN.md), [md/V1_TICKETS.md](md/V1_TICKETS.md), [md/V2_TICKETS.md](md/V2_TICKETS.md), [md/V3_TICKETS.md](md/V3_TICKETS.md)

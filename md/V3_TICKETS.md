@@ -10,7 +10,7 @@
 | Key             | Title                                            | Done | Depends on     |
 |-----------------|--------------------------------------------------|------|----------------|
 | DEVSTROM-V3-1   | Decouple Streamlit → FastAPI HTTP calls          | [x]  | None           |
-| DEVSTROM-V3-2   | PostgreSQL install + db.py connection service    | [ ]  | None           |
+| DEVSTROM-V3-2   | PostgreSQL install + db.py connection service    | [x]  | None           |
 | DEVSTROM-V3-3   | Alembic setup + all 5 table migrations           | [ ]  | V3-2           |
 | DEVSTROM-V3-4   | Google OAuth2 + JWT service (backend)            | [ ]  | V3-1, V3-3     |
 | DEVSTROM-V3-5   | JWT middleware + protect existing API routes     | [ ]  | V3-4           |
@@ -29,7 +29,7 @@
 | DEVSTROM-V3-18  | React auth (login page + JWT flow)               | [ ]  | V3-17, V3-4    |
 | DEVSTROM-V3-19  | React Home + History + Settings pages            | [ ]  | V3-18          |
 
-**V3 Progress: 1/19 complete**
+**V3 Progress: 2/19 complete**
 
 ---
 
