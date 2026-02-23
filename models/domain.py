@@ -1,3 +1,8 @@
+"""
+Domain models — describe what the AI/LangGraph pipeline produces.
+These are shaped around the LLM's structured output, not the HTTP boundary.
+"""
+
 from pydantic import BaseModel, Field
 
 

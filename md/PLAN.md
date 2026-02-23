@@ -13,6 +13,13 @@ The user enters a **tech stack** (and optional domain/level) and the system retu
 Ideas are grounded in **live web search results** so they are practical and current.
 
 ---
+## Branch nameing convention
+
+`feature/DEVSTROM-Vx-x`
+`fix/DEVSTROM-Vx-x`
+`release/Vx`
+
+---
 
 ## 📦 Version Summary
 
