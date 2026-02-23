@@ -11,6 +11,9 @@ from models.domain import ProjectIdea
 from tools import web_search_project_ideas
 
 
+# ── Model constant ────────────────────────────────────────────────────────
+MODEL = "gpt-5-mini"
+
 # ── state ─────────────────────────────────────────────────────────────────────
 
 class DevStromStateRequired(TypedDict):
@@ -69,7 +72,7 @@ def _log_model_call(request, handler):
 def _get_idea_agent():
     return create_deep_agent(
         name="idea_generator",
-        model="gpt-5-mini",
+        model=MODEL,
         tools=[],
         system_prompt=_IDEAS_SYSTEM,
         middleware=[_log_model_call],
@@ -80,7 +83,7 @@ def _get_idea_agent():
 def _get_expand_agent():
     return create_deep_agent(
         name="expand_idea",
-        model="gpt-5-mini",
+        model=MODEL,
         tools=[],
         system_prompt=_EXPAND_SYSTEM,
     )
