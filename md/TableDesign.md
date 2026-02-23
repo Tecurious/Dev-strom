@@ -5,6 +5,91 @@
 
 ---
 
+## Concepts — Alembic & Migrations (Java parallel: Liquibase)
+
+### What is Alembic?
+
+Alembic is Python's **database migration tool** — the equivalent of **Liquibase** or Flyway in Java/Spring.
+
+**The problem it solves:** Without a migration tool, schema changes live in someone's head or a Slack message. A new developer has no reproducible way to set up the database. Production drifts from local. Columns get added and forgotten.
+
+With Alembic, every schema change is a **versioned file committed to Git** — just like source code. Any developer or server runs one command and gets an identical database.
+
+| Concept | Python (Alembic) | Java (Liquibase) |
+|---|---|---|
+| The tool | Alembic | Liquibase |
+| A schema change file | `migrations/versions/abc123_create_users.py` | `db/changelog/V1__create_users.xml` |
+| Apply all pending changes | `alembic upgrade head` | `mvn liquibase:update` |
+| Undo last change | `alembic downgrade -1` | `mvn liquibase:rollback` |
+| Version tracking table | `alembic_version` in your DB | `DATABASECHANGELOG` table |
+
+---
+
+### What is a Migration File?
+
+A migration file is a **versioned Python file describing one database change.** Each file has:
+- A unique **revision ID** (Alembic assigns this)
+- A **`down_revision`** — the ID of the previous migration (forms a chain)
+- An **`upgrade()` function** — what to do (CREATE TABLE, ADD COLUMN, etc.)
+- A **`downgrade()` function** — how to undo it
+
+```python
+# migrations/versions/a3b9c1d2_create_users.py
+
+revision = 'a3b9c1d2'
+down_revision = None          # first migration — no parent
+
+def upgrade():
+    op.create_table('users',
+        sa.Column('id', UUID, primary_key=True),
+        sa.Column('email', sa.Text, unique=True),
+    )
+
+def downgrade():
+    op.drop_table('users')
+```
+
+**Liquibase parallel:**
+```xml
+<!-- db/changelog/V1__create_users.xml -->
+<changeSet id="1" author="dev">
+    <createTable tableName="users">
+        <column name="id" type="UUID"/>
+        <column name="email" type="TEXT"/>
+    </createTable>
+    <rollback><dropTable tableName="users"/></rollback>
+</changeSet>
+```
+
+Same concept — a versioned, ordered unit of change that can be applied and rolled back.
+
+---
+
+### What is `alembic upgrade head`?
+
+`head` = the **latest migration in the chain.** The command applies every migration that hasn't been run yet, in order.
+
+```
+Migration chain (V3-3 creates all 5 tables in one migration):
+
+  None ──► a3b9c1d2 (create users, user_api_keys, runs,
+                      expanded_ideas, web_chunks)
+                             ↑
+                           "head"
+
+Fresh database:
+  → alembic_version table: empty
+  → runs a3b9c1d2 → creates all 5 tables
+  → records a3b9c1d2 in alembic_version ✅
+
+Running it again:
+  → already at a3b9c1d2 → nothing to do (idempotent) ✅
+```
+
+**Liquibase parallel:** Same as `mvn liquibase:update` — checks `DATABASECHANGELOG` to see which changesets have run, applies only the new ones, skips the rest.
+
+---
+
 ## Design Decisions
 
 | Decision | Choice | Rationale |
