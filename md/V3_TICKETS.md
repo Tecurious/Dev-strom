@@ -53,12 +53,12 @@ A thin `services/api_client.py` module will handle all HTTP calls so the Streaml
 
 ### Acceptance Criteria
 
-- [ ] `ui.py` contains zero imports from `graph.py` or `tools.py`.
-- [ ] All network calls go through a new `services/api_client.py` module using the `httpx` library.
-- [ ] The FastAPI base URL is read from an `API_BASE_URL` environment variable, defaulting to `http://localhost:8000`.
-- [ ] The `run_id` returned by the `/ideas` endpoint is stored in Streamlit session state and passed to all subsequent expand and export calls.
-- [ ] The full app flow (generate → expand → download) works end-to-end with both servers running simultaneously.
-- [ ] `API_BASE_URL` is documented in `.env.example`.
+- [x] `ui.py` contains zero imports from `graph.py` or `tools.py`.
+- [x] All network calls go through a new `services/api_client.py` module using the `httpx` library.
+- [x] The FastAPI base URL is read from an `API_BASE_URL` environment variable, defaulting to `http://localhost:8000`.
+- [x] The `run_id` returned by the `/ideas` endpoint is stored in Streamlit session state and passed to all subsequent expand and export calls.
+- [x] The full app flow (generate → expand → download) works end-to-end with both servers running simultaneously.
+- [x] `API_BASE_URL` is documented in `.env.example`.
 
 ### Instructions
 
