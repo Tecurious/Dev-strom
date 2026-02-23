@@ -9,3 +9,8 @@ fastapi>=0.115
 uvicorn[standard]>=0.32
 streamlit>=1.40
 httpx
+# ── database (V3-2) ───────────────────────────────────────────────────────────
+psycopg2-binary>=2.9
+sqlalchemy>=2.0
+pgvector>=0.3
+alembic>=1.13
