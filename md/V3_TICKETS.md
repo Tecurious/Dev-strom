@@ -11,7 +11,7 @@
 |-----------------|--------------------------------------------------|------|----------------|
 | DEVSTROM-V3-1   | Decouple Streamlit → FastAPI HTTP calls          | [x]  | None           |
 | DEVSTROM-V3-2   | PostgreSQL install + db.py connection service    | [x]  | None           |
-| DEVSTROM-V3-3   | Alembic setup + all 5 table migrations           | [ ]  | V3-2           |
+| DEVSTROM-V3-3   | Alembic setup + all 5 table migrations           | [x]  | V3-2           |
 | DEVSTROM-V3-4   | Google OAuth2 + JWT service (backend)            | [ ]  | V3-1, V3-3     |
 | DEVSTROM-V3-5   | JWT middleware + protect existing API routes     | [ ]  | V3-4           |
 | DEVSTROM-V3-6   | Streamlit login page + JWT session handling      | [ ]  | V3-4           |
@@ -29,7 +29,7 @@
 | DEVSTROM-V3-18  | React auth (login page + JWT flow)               | [ ]  | V3-17, V3-4    |
 | DEVSTROM-V3-19  | React Home + History + Settings pages            | [ ]  | V3-18          |
 
-**V3 Progress: 2/19 complete**
+**V3 Progress: 3/19 complete**
 
 ---
 
@@ -117,7 +117,7 @@ SQLAlchemy is the Python library used to communicate with PostgreSQL. It handles
 
 ## DEVSTROM-V3-3 — Alembic Setup + All 5 Table Migrations
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Infrastructure
 **Priority:** Highest
@@ -131,13 +131,13 @@ This ticket creates the initial migration that defines all five tables for the D
 
 ### Acceptance Criteria
 
-- [ ] Alembic is initialized in the project root. The `alembic.ini` configuration file and `migrations/` directory both exist.
-- [ ] Alembic is configured to read `DATABASE_URL` from the environment rather than using a hardcoded connection string.
-- [ ] The initial migration file creates all five tables with the correct columns, data types, foreign keys, unique constraints, and indexes as defined in `PLAN.md`.
-- [ ] The `web_chunks.embedding` column uses the `vector(1536)` type provided by the pgvector SQLAlchemy integration.
-- [ ] Running `alembic upgrade head` on a fresh database creates all five tables without errors.
-- [ ] Running `alembic downgrade -1` removes the tables cleanly.
-- [ ] `alembic upgrade head` is idempotent — running it twice does not cause errors.
+- [x] Alembic is initialized in the project root. The `alembic.ini` configuration file and `migrations/` directory both exist.
+- [x] Alembic is configured to read `DATABASE_URL` from the environment rather than using a hardcoded connection string.
+- [x] The initial migration file creates all five tables with the correct columns, data types, foreign keys, unique constraints, and indexes as defined in `PLAN.md`.
+- [x] The `web_chunks.embedding` column uses the `vector(1536)` type provided by the pgvector SQLAlchemy integration.
+- [x] Running `alembic upgrade head` on a fresh database creates all five tables without errors.
+- [x] Running `alembic downgrade -1` removes the tables cleanly.
+- [x] `alembic upgrade head` is idempotent — running it twice does not cause errors.
 
 ### Instructions
 

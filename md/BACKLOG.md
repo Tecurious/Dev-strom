@@ -65,5 +65,12 @@ Items explicitly dropped from V3 scope with design rationale documented.
 
 ---
 
+```markdown
+## RAG and Knowledge Base
+
+- **Pre-seeded RAG knowledge** — Seed the RAG system with data for common tech stacks to provide low-latency responses. For novel tech stacks, the system will dynamically ingest and embed web search results, allowing the knowledge base to improve linearly over time.
+- **Manual knowledge base refresh** — Add a setting to trigger a batch update of the knowledge base, executing a set of queries to fetch the latest internet data and refresh the vector embeddings in the database.
+```
+
 *Add new items as they come up; move items into a plan (e.g. V3_TICKETS) when scheduling.*
 
