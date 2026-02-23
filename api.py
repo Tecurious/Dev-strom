@@ -9,7 +9,7 @@ from models.dto import IdeasRequest, ExpandRequest, ExportRequest
 load_dotenv()
 
 from graph import app as graph_app, expand_idea as graph_expand_idea
-from export_formatter import idea_to_markdown
+from services.export_formatter import idea_to_markdown
 
 
 

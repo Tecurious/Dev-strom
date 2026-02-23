@@ -132,7 +132,7 @@ if ideas:
                     md = api.export_idea(run_id, pid)
                 except Exception:
                     # graceful fallback: build markdown locally if export fails
-                    from export_formatter import idea_to_markdown
+                    from services.export_formatter import idea_to_markdown
                     md = idea_to_markdown(d, ext, tech_for_export or None)
 
                 fname = (name.replace(" ", "_")[:50] or "idea") + ".md"

@@ -1,4 +1,19 @@
+"""
+Export service — converts a project idea + extended plan into a formatted Markdown document.
+"""
+
+
 def idea_to_markdown(idea: dict, extended_plan: list[str], tech_stack: str | None = None) -> str:
+    """Render a project idea and its extended plan as a structured Markdown document.
+
+    Args:
+        idea: ProjectIdea fields as a dict (name, problem_statement, etc.)
+        extended_plan: Ordered list of detailed implementation steps from the expand step.
+        tech_stack: Original tech stack string for context headers.
+
+    Returns:
+        A multi-section Markdown string suitable for file download.
+    """
     name = (idea.get("name") or "").strip() or "Project"
     problem = (idea.get("problem_statement") or "").strip()
     why_fits = idea.get("why_it_fits") or []
