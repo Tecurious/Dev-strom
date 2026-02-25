@@ -6,12 +6,6 @@ Exposes:
   - SessionLocal : session factory (use get_session() instead in application code)
   - Base         : declarative base for ORM models
   - get_session(): context manager that auto-commits on success, rolls back on error
-
-Java parallel:
-  engine       ≈ DataSource / HikariPool
-  SessionLocal ≈ EntityManagerFactory
-  Base         ≈ @Entity base class
-  get_session  ≈ @Transactional method boundary
 """
 
 import os

@@ -1,76 +1,83 @@
 # Dev-Strom — Backlog
 
-Features and improvements that are not in the current v1 or v2 scope. Prioritize or schedule as needed.
+Features and improvements beyond the current V3 scope. Items are grouped by theme and roughly ordered by architectural impact.
 
 ---
 
-## Post–V2 (high priority)
+## Sharing & History
 
-- **Audit web search trimming and summarization** — After V2 is complete, review how we trim and summarize web search data. Today: (1) `tools.py` caps snippets at `MAX_SNIPPETS_CHARS` (3000) and may truncate the last block to fit; (2) `graph.py` slices `web_context[:4000]` when building the prompt. There is no summarization step today—raw snippets go straight to the idea generator. Post-V2, assess whether these trim points and any new summarization (V2-2) are optimal (e.g. fair per-query caps, prompt budget, loss of signal) and document or adjust as needed.
-
----
-
-## Share and history
-
-- **Share by saved result ID** — Share a link that points to a stored run (e.g. `/result/abc123`) instead of re-running from params. Requires session history (DEVSTROM-V2-6) to be implemented first; deferred to avoid ticket dependency.
+- **Share by saved result ID** — Share a link that points to a stored run (e.g. `/result/abc123`) instead of re-running from params. Requires persistent run history (V3 covers DB storage; this adds a public-facing URL layer on top).
 
 ---
 
-## API and platform
+## UX & Product
 
-- **Rate limiting** — Throttle requests per IP or API key to protect the service (e.g. per-minute caps). Not in v2 scope.
-- **Authentication** — API keys or auth for the public API so only authorized clients can call `POST /ideas`. Not in v2 scope.
-- **API versioning** — Versioned routes (e.g. `/v1/ideas`, `/v2/ideas`) for backward compatibility when the schema or contract changes. Consider when introducing breaking changes.
-
----
-
-## Discovery and sources
-
-- **GitHub repo search** — Use GitHub (or similar) in addition to or instead of web search to ground ideas in real repos. Discussed for v1; skipped in favor of web search; can be revisited as an optional source.
-- **Multiple search providers** — Support more than one web search backend (e.g. Serper, DuckDuckGo) with configurable choice. Current implementation is Tavily-only.
+- **Favorites / saved ideas** — Let users mark specific ideas as favorites and list them separately from full run history. Adds a `favorites` table (or a boolean flag on `expanded_ideas`) and a dedicated UI view. Builds on top of the V3 history page.
+- **Feedback on ideas (thumbs up/down)** — Collect user ratings on generated ideas. Stored per idea per user. Can be used to fine-tune prompts, rank ideas in history, or feed into a reward model for RLHF-style prompt optimization in the future.
 
 ---
 
-## UX and product
+## Knowledge & RAG (V4 — Neo4j GraphRAG)
 
-- **Idea randomization** — When a user clicks "Get Ideas" again for the **same tech stack**, the results should be meaningfully different each time rather than repeating the same ideas. Options: (a) add a `seed` or `variation_hint` to the LLM prompt that changes per request (e.g. timestamp, random adjective); (b) query the user's past runs via MCP and instruct the LLM to avoid repeating them (V3-15 already plans this); (c) inject a `temperature` bump for repeat requests. The MCP-based approach (b) is the cleanest long-term solution and is partly covered by V3-15. A quick win with (a) can be added as a one-line prompt change for V3. Defer full implementation to post-V3.
-- **Internationalization (i18n)** — Multiple languages for the UI and optional localization of generated ideas. Not in v2 scope.
-- **Favorites / saved ideas** — Let users mark specific ideas as favorites and list them separately from full run history. Partially overlaps with history (V2-6); can be added on top of persistence later.
-- **Feedback on ideas** — Thumbs up/down or ratings on generated ideas to improve future prompts or ranking. Not in v2 scope.
-- **Estimated time per project idea** — Add a small metadata tag at the top of each idea card (e.g. "Weekend Project", "1–2 Weeks", "4-Week Build") to signal expected scope and effort. Especially useful for larger, architect-level ideas so users can quickly choose work that fits their available time. Post-V2, should be implemented in a backward-compatible way (e.g. optional field or UI-only metadata) without breaking current API/CLI contracts.
-- **Resume keywords per idea** — Extract 3–4 high-signal keywords per idea (e.g. `Microservices`, `Event-Driven`, `High-Availability`) and display them as metadata chips on the card. Keywords should reflect what recruiters/ATS search for and be derived from existing idea content (tech stack, patterns, architecture). This is a post-V2, additive enhancement and should avoid breaking existing response schemas by default.
+- **Neo4j GraphRAG integration** — Replace the pgvector-based `web_chunks` table with a full Neo4j Knowledge Graph. Instead of storing raw text chunks with embeddings, use an LLM extraction step to pull entities (frameworks, features, patterns) and relationships from web search results, then store them as Nodes and Edges in Neo4j. Neo4j's native vector index replaces pgvector for similarity search, while graph traversal adds structural reasoning (e.g. "Next.js INTRODUCED Server Actions, which RUNS_ON Node.js"). This eliminates hallucinations by grounding the LLM in verified, connected data structures.
+- **Pre-seeded RAG knowledge** — Run an offline script (weekly or on-demand) that uses the LLM to map out common tech stacks (React, Spring Boot, Django, etc.) into a permanent Neo4j graph. When a user asks for a known stack, the agent retrieves pre-built graph context instantly (zero Tavily latency). For novel/unknown stacks, Tavily fires dynamically, extracts entities, and permanently adds them to the graph — the system learns over time.
+- **Manual knowledge base refresh** — Add a settings page action that triggers a batch update: executes a curated set of queries against Tavily, extracts entities via LLM, and refreshes the Neo4j graph with the latest data. Ensures the knowledge base stays current without waiting for user-triggered runs.
 
 ---
 
-## Reliability and scale
+## Observability & Quality
 
-- **Async or background jobs** — For long-running runs, return a job id and poll for completion instead of blocking. Not in v2 scope.
-- **Queue and workers** — Decouple API from graph execution with a queue (e.g. Celery, Redis) for higher throughput. Not in v2 scope.
+- **LangSmith advanced evaluation** — Basic tracing is already live (env variables wired in V3). Next steps: build a LangSmith dataset from representative traces (good, bad, edge cases), attach online evaluators (JSON schema adherence, domain grounding), and use experiments to compare prompt/model changes side-by-side before deploying.
+
+---
+
+## Reliability & Scale
+
+- **Async / background jobs** — For long-running generations, return a job ID immediately and let the client poll for completion instead of blocking. Decouples request lifecycle from graph execution time.
+- **Queue and workers** — Decouple the FastAPI server from LangGraph execution with a task queue (Celery + Redis or similar). Required for horizontal scaling and multi-worker deployments.
+
+---
+
+## Auth & Security (Deferred from V3)
+
+Full authentication stack deferred to focus on core features first. All features currently use a hardcoded anonymous user UUID. When auth is added, the anonymous UUID is swapped for the real authenticated user's UUID — zero code rewrite needed.
+
+- **V3-4: Google OAuth2 + JWT service (backend)** — Register with Google Cloud, build the OAuth redirect flow, issue JWTs.
+- **V3-5: JWT middleware + protect API routes** — FastAPI `Depends(get_current_user)` on all data routes.
+- **V3-6: Streamlit login page + JWT session handling** — Auth gate pattern at the top of every Streamlit page.
+- **V3-7: API Key Vault — service + routes** — Encrypted storage for user-supplied OpenAI/Tavily keys using Fernet.
+- **V3-8: Streamlit Settings page (key management UI)** — UI for adding/removing API keys.
+- **V3-9: Wire graph + tools to use user-supplied keys** — Pull decrypted keys from DB instead of `.env` at runtime.
+- **V3-16: Per-user TTL caching layer** — `cachetools.TTLCache` scoped by user ID.
+
+---
+
+## React Frontend (Deferred from V3)
+
+React frontend deferred until all backend features are complete and stable. Streamlit serves as the primary UI for the entire V3 milestone.
+
+- **V3-17: React + Vite scaffold + routing + API client** — Project setup with Vite, React Router, and an HTTP client for the FastAPI backend.
+- **V3-18: React auth (login page + JWT flow)** — Google OAuth login page consuming the backend auth routes.
+- **V3-19: React Home + History + Settings pages** — Full React UI replacing Streamlit.
 
 ---
 
 ## V4 — Deferred from V3
 
-Items explicitly dropped from V3 scope with design rationale documented.
+Items explicitly descoped from V3 with documented rationale.
 
 | Item | Deferred reason |
 |---|---|
-| `web_chunks.created_at` column | Not needed at V3 scale; add when chunk pruning by age is required |
-| Email + password login | Google OAuth only for V3 — password management (bcrypt, reset flow, email verification) is 3-4 extra tickets with no learning benefit |
-| Trigger-based `updated_at` | Only one update path per table in V3; application-controlled is sufficient; add trigger if multiple update paths emerge |
-| Chunk pruning by age | Depends on `created_at` column deferred above; not needed until DB grows large |
+| Neo4j GraphRAG | V3 ships with pgvector for standard vector RAG; Neo4j rewrite is the flagship V4 feature |
+| Pre-seeded RAG knowledge | Requires Neo4j infrastructure; deferred until GraphRAG is in place |
+| Google OAuth + JWT auth | Overhead for current stage; all features use anonymous user until auth is implemented |
+| React frontend | Streamlit is sufficient for V3; React rewrite after backend features are complete |
+| Email + password login | Google OAuth only — password management (bcrypt, reset flow, email verification) adds complexity with no learning benefit |
 | Redis caching layer | `cachetools.TTLCache` in-process is sufficient for V3; Redis needed for multi-process / distributed deployment |
-| Multiple expansions history UI | Backend allows multiple expansions (no UNIQUE constraint); surfacing past expansions in the UI is a UX feature for V4 |
-| Cross-user web chunk reuse | V3 scopes `web_chunks` by `run_id`; cross-user retrieval requires semantic deduplication and raises privacy questions — V4 concern |
+| Multiple expansions history UI | Backend allows multiple expansions (no UNIQUE constraint); surfacing past expansions in the UI is a V4 UX feature |
+| Cross-user web chunk reuse | V3 scopes `web_chunks` by `run_id`; cross-user retrieval requires semantic deduplication and raises privacy questions |
 
 ---
 
-```markdown
-## RAG and Knowledge Base
-
-- **Pre-seeded RAG knowledge** — Seed the RAG system with data for common tech stacks to provide low-latency responses. For novel tech stacks, the system will dynamically ingest and embed web search results, allowing the knowledge base to improve linearly over time.
-- **Manual knowledge base refresh** — Add a setting to trigger a batch update of the knowledge base, executing a set of queries to fetch the latest internet data and refresh the vector embeddings in the database.
-```
-
-*Add new items as they come up; move items into a plan (e.g. V3_TICKETS) when scheduling.*
+*Add new items as they come up; move items into a versioned plan (e.g. V3_TICKETS, V4_TICKETS) when scheduling.*
 
