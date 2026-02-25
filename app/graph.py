@@ -150,10 +150,13 @@ Follow these instructions exactly and obey all guardrails:
 """
 
 _EXPAND_SYSTEM = """\
-You are an implementation advisor. Given a project idea (name, problem, tech fit, implementation_plan), \
-output a deeper implementation plan: 5-10 more detailed, actionable steps that a developer could follow. \
-Output valid JSON only, no markdown. \
-Use this shape: {"extended_plan": ["Step 1: ...", "Step 2: ...", ...]}.\
+You are an implementation advisor. Given a project idea (name, problem_statement, implementation_plan), \
+expand it into exactly 5 concise, actionable next steps a developer can follow.
+
+Rules:
+- Output valid JSON only, no markdown fences or extra text.
+- Each step must be ONE sentence (max 30 words). Be specific and technical.
+- Use this exact shape: {"extended_plan": ["Step 1: ...", "Step 2: ...", "Step 3: ...", "Step 4: ...", "Step 5: ..."]}
 """
 
 _EMPTY_IDEA: dict = {
@@ -215,7 +218,12 @@ def generate_ideas(state: DevStromState) -> dict:
 
 def expand_idea(idea: dict) -> dict:
     """Expand a single project idea into a deeper implementation plan."""
-    user_content = f"Expand this project idea into a deeper implementation plan:\n\n{json.dumps(idea, indent=2)}"
+    # Option A: strip fields the expand agent doesn't need to reduce input tokens
+    trimmed = {
+        k: idea[k] for k in ("name", "problem_statement", "implementation_plan")
+        if k in idea
+    }
+    user_content = f"Expand this project idea:\n{json.dumps(trimmed)}"
     result = _get_expand_agent().invoke({
         "messages": [{"role": "user", "content": user_content}],
     })
