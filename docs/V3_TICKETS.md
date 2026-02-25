@@ -14,13 +14,13 @@
 | DEVSTROM-V3-2   | PostgreSQL install + db.py connection service    | [x]  | None           |
 | DEVSTROM-V3-3   | Alembic setup + all 5 table migrations           | [x]  | V3-2           |
 | DEVSTROM-V3-4   | Run service + FastAPI history endpoints          | [x]  | V3-3           |
-| DEVSTROM-V3-5   | Streamlit History page                           | [ ]  | V3-4           |
+| DEVSTROM-V3-5   | Streamlit History page                           | [x]  | V3-4           |
 | DEVSTROM-V3-6   | Web chunking + embedding + pgvector storage      | [ ]  | V3-3           |
 | DEVSTROM-V3-7   | Semantic retrieval at idea-generation time       | [ ]  | V3-6, V3-4     |
 | DEVSTROM-V3-8   | Setup MCP Postgres server (standalone)           | [ ]  | V3-3           |
 | DEVSTROM-V3-9   | Integrate MCP into DeepAgent                     | [ ]  | V3-8, V3-4     |
 
-**V3 Progress: 4/9 complete**
+**V3 Progress: 5/9 complete**
 
 ---
 
@@ -185,7 +185,7 @@ Until auth is implemented, all runs are saved under a hardcoded anonymous user U
 
 ## DEVSTROM-V3-5 — Streamlit History Page
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Feature
 **Priority:** Medium
@@ -197,11 +197,11 @@ The history page is the display layer for the data built in V3-4. It fetches pas
 
 ### Acceptance Criteria
 
-- [ ] `pages/2_📋_History.py` exists and is reachable from the Streamlit sidebar.
-- [ ] The page fetches and displays a list of past runs, showing the tech stack and creation timestamp for each.
-- [ ] Clicking a run fetches the full run from `GET /runs/{run_id}` and renders the ideas in read-only mode using the same card layout as the Home page.
-- [ ] A "No history yet" message is shown if no saved runs exist.
-- [ ] A "Load more" button appears if more runs exist beyond the current page.
+- [x] `pages/2_📋_History.py` exists and is reachable from the Streamlit sidebar.
+- [x] The page fetches and displays a list of past runs, showing the tech stack and creation timestamp for each.
+- [x] Clicking a run fetches the full run from `GET /runs/{run_id}` and renders the ideas in read-only mode using the same card layout as the Home page.
+- [x] A "No history yet" message is shown if no saved runs exist.
+- [x] A "Load more" button appears if more runs exist beyond the current page.
 
 ### Instructions
 
