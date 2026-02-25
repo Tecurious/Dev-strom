@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(root, ".env"))
 
-from graph import app
+from app.graph import app
 
 
 def main():

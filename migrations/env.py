@@ -30,7 +30,7 @@ if config.config_file_name is not None:
 # ── target metadata ────────────────────────────────────────────────────────────
 # Import Base from services/db.py so Alembic can compare ORM models against the
 # live database when using --autogenerate.
-from services.db import Base  # noqa: E402
+from app.services.db import Base  # noqa: E402
 
 target_metadata = Base.metadata
 

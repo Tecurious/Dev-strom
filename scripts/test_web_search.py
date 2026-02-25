@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(root, ".env"))
 
-from tools import web_search_project_ideas
+from app.tools import web_search_project_ideas
 
 
 def main():

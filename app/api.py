@@ -11,13 +11,13 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import PlainTextResponse
 
-from models.dto import ExpandRequest, ExportRequest, IdeasRequest
+from app.models.dto import ExpandRequest, ExportRequest, IdeasRequest
 
 load_dotenv()
 
-from graph import app as graph_app, expand_idea as graph_expand_idea
-from services.export_formatter import idea_to_markdown
-from services.run_service import get_run, load_history, save_expanded_idea, save_run
+from app.graph import app as graph_app, expand_idea as graph_expand_idea
+from app.services.export_formatter import idea_to_markdown
+from app.services.run_service import get_run, load_history, save_expanded_idea, save_run
 
 api = FastAPI(title="Dev-Strom")
 

@@ -7,8 +7,8 @@ from deepagents import create_deep_agent
 from langchain.agents.middleware import wrap_model_call
 from langgraph.graph import END, START, StateGraph
 
-from models.domain import ProjectIdea
-from tools import web_search_project_ideas
+from app.models.domain import ProjectIdea
+from app.tools import web_search_project_ideas
 
 
 # ── Model constant ────────────────────────────────────────────────────────

@@ -17,7 +17,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 # Resolve .env relative to this file's location so it works from any CWD.
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 # ── engine ─────────────────────────────────────────────────────────────────────
 # DATABASE_URL must be set in .env — no hardcoded credentials anywhere.

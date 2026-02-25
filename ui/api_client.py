@@ -12,20 +12,27 @@ load_dotenv()
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
-# ── shared request helper ──────────────────────────────────────────────────────
+# ── shared request helpers ─────────────────────────────────────────────────────
+
 
 def _post(path: str, payload: dict, *, timeout: int = 120) -> dict:
-    """POST to the FastAPI server and return the parsed JSON body.
-    Raises httpx.HTTPStatusError on non-2xx responses so callers can surface
-    the error message without knowing HTTP details.
-    """
+    """POST to the FastAPI server and return the parsed JSON body."""
     url = f"{API_BASE_URL}{path}"
     response = httpx.post(url, json=payload, timeout=timeout)
     response.raise_for_status()
     return response.json()
 
 
+def _get(path: str, *, params: dict | None = None, timeout: int = 30) -> dict:
+    """GET from the FastAPI server and return the parsed JSON body."""
+    url = f"{API_BASE_URL}{path}"
+    response = httpx.get(url, params=params, timeout=timeout)
+    response.raise_for_status()
+    return response.json()
+
+
 # ── public API ─────────────────────────────────────────────────────────────────
+
 
 def get_ideas(
     tech_stack: str,
@@ -55,7 +62,18 @@ def expand_idea(run_id: str, pid: int) -> dict:
 
 def export_idea(run_id: str, pid: int) -> str:
     """Call POST /export and return the raw Markdown string."""
-    url = f"{_BASE}/export"
+    url = f"{API_BASE_URL}/export"
     response = httpx.post(url, json={"run_id": run_id, "pid": pid}, timeout=30)
     response.raise_for_status()
     return response.text
+
+
+def get_history(*, limit: int = 20, offset: int = 0) -> dict:
+    """Call GET /history and return {runs: [...], limit, offset}."""
+    return _get("/history", params={"limit": limit, "offset": offset})
+
+
+def get_run_detail(run_id: str) -> dict:
+    """Call GET /runs/{run_id} and return the full run including ideas."""
+    return _get(f"/runs/{run_id}")
+

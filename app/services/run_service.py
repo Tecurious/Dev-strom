@@ -10,8 +10,8 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from services.db import get_session
-from services.models import ANONYMOUS_USER_ID, ExpandedIdea, Run
+from app.services.db import get_session
+from app.services.models import ANONYMOUS_USER_ID, ExpandedIdea, Run
 
 
 def save_run(

@@ -14,7 +14,7 @@ from sqlalchemy import Boolean, ForeignKey, Integer, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from services.db import Base
+from app.services.db import Base
 
 # ── Anonymous user constant ────────────────────────────────────────────────────
 # Used until auth is implemented (V3-4 through V3-9).
