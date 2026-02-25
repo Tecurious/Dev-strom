@@ -13,14 +13,14 @@
 | DEVSTROM-V3-1   | Decouple Streamlit → FastAPI HTTP calls          | [x]  | None           |
 | DEVSTROM-V3-2   | PostgreSQL install + db.py connection service    | [x]  | None           |
 | DEVSTROM-V3-3   | Alembic setup + all 5 table migrations           | [x]  | V3-2           |
-| DEVSTROM-V3-4   | Run service + FastAPI history endpoints          | [ ]  | V3-3           |
+| DEVSTROM-V3-4   | Run service + FastAPI history endpoints          | [x]  | V3-3           |
 | DEVSTROM-V3-5   | Streamlit History page                           | [ ]  | V3-4           |
 | DEVSTROM-V3-6   | Web chunking + embedding + pgvector storage      | [ ]  | V3-3           |
 | DEVSTROM-V3-7   | Semantic retrieval at idea-generation time       | [ ]  | V3-6, V3-4     |
 | DEVSTROM-V3-8   | Setup MCP Postgres server (standalone)           | [ ]  | V3-3           |
 | DEVSTROM-V3-9   | Integrate MCP into DeepAgent                     | [ ]  | V3-8, V3-4     |
 
-**V3 Progress: 3/9 complete**
+**V3 Progress: 4/9 complete**
 
 ---
 
@@ -147,7 +147,7 @@ This ticket creates the initial migration that defines all five tables for the D
 
 ## DEVSTROM-V3-4 — Run Service + FastAPI History Endpoints
 
-- [ ] **Ticket completed**
+- [x] **Ticket completed**
 
 **Type:** Feature
 **Priority:** High
@@ -163,12 +163,12 @@ Until auth is implemented, all runs are saved under a hardcoded anonymous user U
 
 ### Acceptance Criteria
 
-- [ ] A hardcoded anonymous user is seeded into the `users` table (via a migration or startup script) so foreign key constraints are satisfied.
-- [ ] `services/run_service.py` exists with a `save_run` function that inserts a new row into `runs` and returns the generated `run_id`.
-- [ ] The FastAPI `/ideas` handler calls `save_run` after a successful graph result. The `run_id` is included in the response.
-- [ ] `GET /history` returns runs for the anonymous user, most recent first, with support for `limit` and `offset` query parameters. Default limit is 20.
-- [ ] `GET /runs/{run_id}` returns the full details of a single run including all ideas. Returns 404 if the run does not exist.
-- [ ] Expanded ideas created via `POST /expand` are persisted to the `expanded_ideas` table, linked to the `run_id` and idea position.
+- [x] A hardcoded anonymous user is seeded into the `users` table (via a migration or startup script) so foreign key constraints are satisfied.
+- [x] `services/run_service.py` exists with a `save_run` function that inserts a new row into `runs` and returns the generated `run_id`.
+- [x] The FastAPI `/ideas` handler calls `save_run` after a successful graph result. The `run_id` is included in the response.
+- [x] `GET /history` returns runs for the anonymous user, most recent first, with support for `limit` and `offset` query parameters. Default limit is 20.
+- [x] `GET /runs/{run_id}` returns the full details of a single run including all ideas. Returns 404 if the run does not exist.
+- [x] Expanded ideas created via `POST /expand` are persisted to the `expanded_ideas` table, linked to the `run_id` and idea position.
 
 ### Instructions
 
