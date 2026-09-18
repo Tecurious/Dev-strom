@@ -42,15 +42,6 @@ def slug_from_repo(repo_url: str | None = None, path: str | None = None) -> str:
     return "run"
 
 
-def unique_slug(base: str, taken: set[str]) -> str:
-    if base not in taken:
-        return base
-    n = 2
-    while f"{base}-{n}" in taken:
-        n += 1
-    return f"{base}-{n}"
-
-
 def allocate_slug(session, model, base: str) -> str:
     """Pick the first free slug for `model.slug`, querying the open session."""
     slug = base

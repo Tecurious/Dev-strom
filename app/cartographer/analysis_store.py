@@ -1,16 +1,13 @@
-"""Pluggable persistence for evidence-first repository Analyses.
+"""Persistence for evidence-first repository Analyses.
 
-`AnalysisStore` is the interface the API/integration layer depends on;
-`PostgresJsonbStore` is the concrete implementation, storing the domain
-`Analysis` (and the structural `ProjectGraph` it was derived from) as JSONB
-in the `analysis_runs` table. Mirrors `app.services.run_service` /
-`app.services.run_service` exactly (same interface shape, same `get_session`
-usage) — see those modules for the rationale.
+`PostgresJsonbStore` stores the domain `Analysis` (and the structural
+`ProjectGraph` it was derived from) as JSONB in the `analysis_runs` table.
+Mirrors `app.services.run_service` exactly (same interface shape, same
+`get_session` usage) — see that module for the rationale.
 """
 
 import logging
 import uuid
-from abc import ABC, abstractmethod
 
 from sqlalchemy import select
 
@@ -22,36 +19,7 @@ from app.services.slugs import get_by_public_id, insert_with_unique_slug, public
 logger = logging.getLogger(__name__)
 
 
-class AnalysisStore(ABC):
-    """Persistence interface for repository-analysis runs.
-
-    Implementations must round-trip an `Analysis` (plus the optional
-    `ProjectGraph` it was derived from and the repo it targeted) through
-    `save` -> `get`.
-    """
-
-    @abstractmethod
-    def save(
-        self,
-        analysis: Analysis,
-        *,
-        project_graph: dict | None = None,
-        repo_url: str | None = None,
-    ) -> str:
-        """Persist a run and return its run_id (as a string)."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def get(self, run_id: str) -> dict | None:
-        """Fetch a run by id. Returns None if it doesn't exist.
-
-        On success returns a dict with keys: run_id, repo_url, analysis
-        (dict), project_graph (dict | None), created_at.
-        """
-        raise NotImplementedError
-
-
-class PostgresJsonbStore(AnalysisStore):
+class PostgresJsonbStore:
     """Stores runs as JSONB rows in `analysis_runs`, via the existing lazy
     engine / get_session() pattern from app.services.db.
     """
@@ -102,8 +70,8 @@ class PostgresJsonbStore(AnalysisStore):
         *,
         owner_id: uuid.UUID | None = None,
     ) -> list[dict]:
-        """Convenience helper (not part of the AnalysisStore interface) for
-        listing recent runs as lightweight SUMMARY rows for a History list:
+        """Convenience helper for listing recent runs as lightweight SUMMARY rows
+        for a History list:
         run_id, repo_url, language, status, finding/recommendation counts, and
         created_at — derived from the stored Analysis, not the full payload.
         Scoped to `owner_id` when given."""
