@@ -37,11 +37,6 @@ class Settings(BaseSettings):
     )
     tavily_api_key: str | None = Field(default=None, alias="TAVILY_API_KEY")
 
-    @property
-    def openai_api_key(self) -> str | None:
-        """Backward-compatible alias for api_key."""
-        return self.api_key
-
     # ── database ───────────────────────────────────────────────────────────
     database_url: str | None = Field(default=None, alias="DATABASE_URL")
 

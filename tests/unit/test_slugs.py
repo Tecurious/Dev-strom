@@ -3,7 +3,7 @@
 Public run_id is a human-readable slug; UUID stays the row primary key.
 """
 
-from app.services.slugs import parse_uuid, slug_from_repo, slugify, unique_slug
+from app.services.slugs import parse_uuid, slug_from_repo, slugify
 
 
 def test_slug_from_github_https_url():
@@ -31,15 +31,6 @@ def test_slugify_intent():
 def test_slugify_empty_falls_back_to_run():
     assert slugify("") == "run"
     assert slugify(None) == "run"
-
-
-def test_unique_slug_returns_base_when_free():
-    assert unique_slug("vallaksa-journalapplication", set()) == "vallaksa-journalapplication"
-
-
-def test_unique_slug_appends_number_on_collision():
-    taken = {"vallaksa-journalapplication", "vallaksa-journalapplication-2"}
-    assert unique_slug("vallaksa-journalapplication", taken) == "vallaksa-journalapplication-3"
 
 
 def test_parse_uuid_accepts_uuid_and_rejects_slug():

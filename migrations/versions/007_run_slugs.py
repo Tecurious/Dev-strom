@@ -10,7 +10,7 @@ Revision: 007
 import sqlalchemy as sa
 from alembic import op
 
-from app.services.slugs import slug_from_repo, slugify, unique_slug
+from app.services.slugs import slug_from_repo, slugify
 
 revision = "007_run_slugs"
 down_revision = "006_analysis_runs"
@@ -23,6 +23,17 @@ _TABLES = (
     "cartograph_runs",
     "advisor_runs",
 )
+
+
+def _unique_slug(base: str, taken: set[str]) -> str:
+    """Self-contained copy of the former slugs.unique_slug (removed from
+    app.services.slugs; migrations must not depend on mutable app code)."""
+    if base not in taken:
+        return base
+    n = 2
+    while f"{base}-{n}" in taken:
+        n += 1
+    return f"{base}-{n}"
 
 
 def _slug_base(value: str | None, *, from_repo: bool) -> str:
@@ -39,7 +50,7 @@ def _backfill(conn, table: str, expr: str, *, from_repo: bool) -> None:
     ).fetchall()
     taken: set[str] = set()
     for row in rows:
-        slug = unique_slug(_slug_base(row.base, from_repo=from_repo), taken)
+        slug = _unique_slug(_slug_base(row.base, from_repo=from_repo), taken)
         taken.add(slug)
         conn.execute(
             sa.text(f"UPDATE {table} SET slug = :slug WHERE id = :id"),
