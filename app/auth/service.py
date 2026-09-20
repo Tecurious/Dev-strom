@@ -74,4 +74,5 @@ def _to_dict(user: User) -> dict:
         "name": user.name,
         "avatar_url": user.avatar_url,
         "auth_provider": user.auth_provider,
+        "created_at": user.created_at.isoformat(),
     }
