@@ -86,9 +86,12 @@ jobs:
           fi
           git diff --stat
 
+      # REST instead of `gh pr create`: fine-grained PATs cannot use the
+      # GraphQL pullRequests object gh relies on, but REST PR creation only
+      # needs Contents:write.
       - name: Open PR
         env:
-          GH_TOKEN: ${{ secrets.INFRA_PAT }}
+          INFRA_PAT: ${{ secrets.INFRA_PAT }}
         run: |
           BRANCH="bump/dev-strom-${VERSION}"
           git config user.name "release-bot"
@@ -96,9 +99,10 @@ jobs:
           git checkout -b "$BRANCH"
           git commit -am "bump dev-strom to ${VERSION}" || exit 0
           git push origin "$BRANCH"
-          gh pr create \
-            --repo Tecurious/Tecurious-Infra \
-            --head "$BRANCH" \
-            --base main \
-            --title "bump dev-strom to ${VERSION}" \
-            --body "Automated tag bump from Dev-strom release ${VERSION}. Merge to deploy — ArgoCD picks it up from main."
+          curl -sf -X POST \
+            -H "Authorization: token ${INFRA_PAT}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/Tecurious/Tecurious-Infra/pulls \
+            -d "$(jq -n --arg h "$BRANCH" --arg t "bump dev-strom to ${VERSION}" \
+              '{title:$t, head:$h, base:"main",
+                body:("Automated tag bump from Dev-strom release ${VERSION}. Merge to deploy — ArgoCD picks it up from main.")}')"
