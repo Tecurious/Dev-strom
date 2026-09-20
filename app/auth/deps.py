@@ -21,6 +21,7 @@ _ANON = {
     "name": "Anonymous",
     "avatar_url": None,
     "auth_provider": "system",
+    "created_at": None,
 }
 
 
