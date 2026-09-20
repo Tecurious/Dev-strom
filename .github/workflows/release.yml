@@ -89,6 +89,9 @@ jobs:
           git config user.email "release-bot@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git commit -am "bump dev-strom to ${VERSION}" || exit 0
+          # Re-tagging an existing version may find the branch already pushed:
+          # integrate remote state instead of failing the run.
+          git fetch origin "$BRANCH" 2>/dev/null && git merge -q -X ours "origin/$BRANCH" 2>/dev/null || true
           git push origin "$BRANCH"
           curl -sf -X POST \
             -H "Authorization: token ${INFRA_PAT}" \
