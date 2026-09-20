@@ -104,5 +104,5 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/Tecurious/Tecurious-Infra/pulls \
             -d "$(jq -n --arg h "$BRANCH" --arg t "bump dev-strom to ${VERSION}" \
-              '{title:$t, head:$h, base:"main",
-                body:("Automated tag bump from Dev-strom release ${VERSION}. Merge to deploy — ArgoCD picks it up from main.")}')"
+              '{title:$t, head:$h, base:"main", auto_merge:true,
+                body:("Automated tag bump from Dev-strom release ${VERSION}. Auto-merges — ArgoCD picks it up from main.")}')"
