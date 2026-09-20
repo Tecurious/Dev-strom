@@ -27,9 +27,6 @@ jobs:
           - name: dev-strom-api
             context: .
             dockerfile: Dockerfile
-          - name: dev-strom-web
-            context: web
-            dockerfile: web/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
@@ -78,12 +75,6 @@ jobs:
           sed -i "s#image: ghcr.io/tecurious/dev-strom-api:.*#image: ghcr.io/tecurious/dev-strom-api:${VERSION}#" \
             infrastructure/apps/dev-strom/api-deployment.yaml \
             infrastructure/apps/dev-strom/migration-job.yaml
-          # web image is versioned independently; bump only if a matching web tag exists pattern-wise.
-          # For now web tags ride the same release tag only when explicitly maintained:
-          if grep -q "dev-strom-web:" infrastructure/apps/dev-strom/web-deployment.yaml; then
-            sed -i "s#image: ghcr.io/tecurious/dev-strom-web:.*#image: ghcr.io/tecurious/dev-strom-web:${VERSION}#" \
-              infrastructure/apps/dev-strom/web-deployment.yaml || true
-          fi
           git diff --stat
 
       # REST instead of `gh pr create`: fine-grained PATs cannot use the
