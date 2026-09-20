@@ -12,6 +12,7 @@ import uuid
 
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 
 from app.models.dto import (
@@ -81,6 +82,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 api = FastAPI(title="Dev-Strom")
+
+# CORS: the SPA is served from settings.web_base_url (https://devstrom.site in
+# production via Cloudflare Pages); the API lives on api.devstrom.site, so
+# cross-origin calls need explicit allowance. Credentials enabled for the
+# session cookie. Local dev defaults to http://localhost:5173 via config.
+api.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.web_base_url],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 api.include_router(auth_router)
 
 
