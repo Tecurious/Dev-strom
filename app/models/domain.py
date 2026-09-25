@@ -220,5 +220,12 @@ class Analysis(BaseModel):
         default=None,
         description="Optional component-level architecture diagram (Mermaid flowchart source)",
     )
+    archify: dict | None = Field(
+        default=None,
+        description=(
+            "Optional Archify-style architecture spec (components/boundaries/connections, "
+            "tt-a1i/archify schema subset) for the rich interactive diagram"
+        ),
+    )
     status: Literal["pending", "complete", "failed"] = "complete"
     created_at: datetime = Field(default_factory=_utcnow)

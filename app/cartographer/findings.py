@@ -28,6 +28,7 @@ from typing import Any, get_args
 from deepagents import create_deep_agent
 
 from app.cartographer.graph_summary import summarize_graph
+from app.cartographer.archify_spec import coerce_archify_spec
 from app.config import settings
 from app.graph import _extract_last_content, _invoke_with_fallback, _strip_markdown_fences
 from app.llm import chat_model
@@ -78,6 +79,23 @@ file-level nitpicks.
 {
   "summary": "2-4 sentence system overview: services, primary architecture pattern, and data flow.",
   "mermaid": "flowchart TD\\n  Web --> API\\n  API --> DB\\n  ...",
+  "archify": {
+    "schema_version": 1,
+    "diagram_type": "architecture",
+    "meta": {"title": "System architecture", "quality_profile": "showcase"},
+    "components": [
+      {"id": "web", "type": "frontend", "label": "Web UI", "sublabel": "React", "row": 0, "col": 0},
+      {"id": "api", "type": "backend", "label": "API Server", "sublabel": "FastAPI", "row": 0, "col": 1},
+      {"id": "db", "type": "database", "label": "Postgres", "sublabel": "primary", "row": 1, "col": 0}
+    ],
+    "connections": [
+      {"from": "web", "to": "api", "label": "HTTPS", "variant": "emphasis"},
+      {"from": "api", "to": "db", "label": "SQL"}
+    ],
+    "boundaries": [
+      {"kind": "security-group", "label": "Trust zone", "wraps": ["api", "db"]}
+    ]
+  },
   "findings": [
     {
       "category": "architecture | design | scalability | reliability | security | performance | maintainability | testing | product",
@@ -109,6 +127,11 @@ file-level nitpicks.
 
 2. CONTENT GUIDELINES:
    - "mermaid": Service/integration diagram only (≤15 nodes, flowchart TD). No file-level nodes.
+   - "archify": the SAME diagram as archify spec — component `type` MUST be one of
+     frontend | backend | database | cloud | security | messagebus | external;
+     `variant` one of emphasis | dashed | security | default (optional);
+     grid `row`/`col` place components top-to-bottom in data-flow order, no overlaps;
+     ≤15 components; connections reference component ids; boundaries `wraps` reference ids.
    - "findings": 3-8 items max. Focus on architecture patterns and service boundaries.
    - Evidence may cite a service directory (app/, web/) or integration from the graph — NOT class/function names.
    - Use `stats.architecture_patterns` from the input as hints when present.
@@ -325,11 +348,18 @@ def parse_analysis(
         findings, index_to_id = _coerce_findings(data.get("findings"), repository.id, known_paths)
         recommendations = _coerce_recommendations(data.get("recommendations"), index_to_id)
         summary = data.get("summary")
+        archify: dict | None
+        try:
+            archify = coerce_archify_spec(data.get("archify"))
+        except Exception as exc:
+            logger.warning("archify spec invalid (will retry once): %s", exc)
+            archify = None
         return Analysis(
             id=str(uuid.uuid4()),
             repository=repository,
             summary=summary.strip() if isinstance(summary, str) else "",
             mermaid=_coerce_mermaid(data.get("mermaid")),
+            archify=archify,
             findings=findings,
             recommendations=recommendations,
             status="complete",
@@ -382,7 +412,82 @@ def analyze_findings(graph: Any, repository: Repository) -> Analysis:
     raw = _extract_last_content(result)
     # Empty path set (degenerate/empty graph) -> None -> skip file validation,
     # since there's no basis to distinguish real from fabricated paths.
-    return parse_analysis(raw, repository, known_paths=_graph_file_paths(graph) or None)
+    analysis = parse_analysis(raw, repository, known_paths=_graph_file_paths(graph) or None)
+    return _repair_mermaid_once(analysis, raw, repository)
+
+
+def _repair_mermaid_once(analysis: Analysis, raw: str, repository: Repository) -> Analysis:
+    """One retry hook (archify-style validation): if the LLM's diagram(s)
+    don't parse/validate, re-prompt ONCE with the diagnostics appended, then
+    accept or keep the original. Never raises."""
+    from app.cartographer.diagram import DiagramError, parse_mermaid
+
+    mermaid_ok = not analysis.mermaid
+    mermaid_reason: str | None = None
+    archify_reason: str | None = None
+    if analysis.mermaid:
+        try:
+            parse_mermaid(analysis.mermaid)
+            mermaid_ok = True
+        except DiagramError as exc:
+            logger.warning("analyze_findings: mermaid unparseable (%s); one retry", exc)
+            mermaid_reason = f"mermaid diagram could not be parsed: {exc}"
+    archify_ok = analysis.archify is not None or not _raw_has_archify(raw)
+    if analysis.archify is None and _raw_has_archify(raw):
+        logger.warning("analyze_findings: archify spec invalid; one retry")
+        archify_reason = "archify spec failed validation"
+    if mermaid_ok and archify_ok:
+        return analysis
+
+    reasons = [r for r in (mermaid_reason, archify_reason) if r]
+    retry_prompt = (
+        f"{raw}\n\nYour diagram output has problems: {'; '.join(reasons)}\n"
+        "Return the FULL corrected Analysis JSON now. For `mermaid`: a flowchart TD "
+        "using only `flowchart TD`, node defs `Id[Label]`, edges `A --> B`, "
+        "`A -- label --> B`, `A -->|label| B`; no subgraphs, styles, or cycles. "
+        "For `archify`: follow the schema in the instructions exactly — unique component "
+        "ids, valid component types, connections/boundaries referencing existing ids, "
+        "no overlapping row/col cells."
+    )
+    try:
+        result2 = _invoke_with_fallback(
+            _get_findings_agent, [{"role": "user", "content": retry_prompt}]
+        )
+        raw2 = _extract_last_content(result2)
+        repaired = parse_analysis(raw2, repository, known_paths=None)
+        keep_mermaid = repaired.mermaid and _mermaid_parses(repaired.mermaid)
+        keep_archify = repaired.archify is not None
+        if keep_mermaid or keep_archify:
+            return Analysis(
+                id=analysis.id,
+                repository=analysis.repository,
+                summary=repaired.summary or analysis.summary,
+                mermaid=repaired.mermaid if keep_mermaid else analysis.mermaid,
+                archify=repaired.archify if keep_archify else analysis.archify,
+                findings=repaired.findings or analysis.findings,
+                recommendations=repaired.recommendations or analysis.recommendations,
+                status="complete",
+            )
+    except Exception as exc2:
+        logger.warning("analyze_findings: diagram retry failed (%s); keeping original", exc2)
+    return analysis
+
+
+def _mermaid_parses(source: str) -> bool:
+    from app.cartographer.diagram import parse_mermaid
+    try:
+        parse_mermaid(source)
+        return True
+    except Exception:
+        return False
+
+
+def _raw_has_archify(raw: str) -> bool:
+    try:
+        data = json.loads(_strip_markdown_fences(raw or ""))
+        return isinstance(data, dict) and bool(data.get("archify"))
+    except Exception:
+        return False
 
 
 def _graph_file_paths(graph: Any) -> frozenset[str]:
