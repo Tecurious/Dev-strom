@@ -83,7 +83,7 @@ def parse_mermaid(source: str) -> Topology:
             for endpoint in (a, b):
                 if endpoint not in known:
                     raise DiagramError(f"Edge references undefined node {endpoint!r}.")
-    topo.edges = topo.edges if direction != "RL" else [(b, a, l) for a, b, l in topo.edges]
+    topo.edges = topo.edges if direction != "RL" else [(b, a, lbl) for a, b, lbl in topo.edges]
     return topo
 
 
