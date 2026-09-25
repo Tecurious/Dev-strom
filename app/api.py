@@ -441,6 +441,32 @@ def get_analyze_run_detail(run_id: str, user: dict = Depends(require_user)):
     return _analysis_response(record["run_id"], record["analysis"], record.get("project_graph"))
 
 
+@api.get("/analyze/{run_id}/diagram.html")
+def get_analysis_diagram_html(run_id: str, user: dict = Depends(require_user)):
+    """Render the analysis' Mermaid diagram as a self-contained archify-styled
+    HTML file (dark/light themes, inline SVG, zero JS). Deterministic — no LLM.
+    422 with diagnostics if the stored mermaid can't be rendered.
+    """
+    from fastapi import Response
+
+    from app.cartographer.diagram import DiagramError, render_html
+
+    if get_analysis_run is None:
+        raise HTTPException(status_code=503, detail="Analysis store unavailable.")
+    record = get_analysis_run(run_id, owner_id=uuid.UUID(user["id"]))
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"Analysis run {run_id} not found.")
+    mermaid = record["analysis"].get("mermaid")
+    if not mermaid:
+        raise HTTPException(status_code=404, detail="This analysis has no diagram.")
+    try:
+        html = render_html(mermaid, title=record.get("repo_url") or "Architecture")
+    except DiagramError as exc:
+        raise HTTPException(status_code=422, detail={"message": str(exc), "diagnostics": exc.diagnostics})
+    return Response(content=html, media_type="text/html",
+                    headers={"Content-Disposition": f'inline; filename="diagram-{run_id}.html"'})
+
+
 @api.get("/analyses")
 def list_analyses(
     user: dict = Depends(require_user),

@@ -382,7 +382,41 @@ def analyze_findings(graph: Any, repository: Repository) -> Analysis:
     raw = _extract_last_content(result)
     # Empty path set (degenerate/empty graph) -> None -> skip file validation,
     # since there's no basis to distinguish real from fabricated paths.
-    return parse_analysis(raw, repository, known_paths=_graph_file_paths(graph) or None)
+    analysis = parse_analysis(raw, repository, known_paths=_graph_file_paths(graph) or None)
+    return _repair_mermaid_once(analysis, raw, repository)
+
+
+def _repair_mermaid_once(analysis: Analysis, raw: str, repository: Repository) -> Analysis:
+    """One retry hook (archify-style validation): if the LLM's diagram doesn't
+    parse, re-prompt ONCE with the diagnostics appended, then accept or keep
+    the original. Never raises."""
+    if not analysis.mermaid:
+        return analysis
+    from app.cartographer.diagram import DiagramError, parse_mermaid
+
+    try:
+        parse_mermaid(analysis.mermaid)
+        return analysis
+    except DiagramError as exc:
+        logger.warning("analyze_findings: mermaid unparseable (%s); one retry", exc)
+        retry_prompt = (
+            f"{raw}\n\nYour `mermaid` diagram could not be parsed: {exc}\n"
+            "Return the FULL corrected Analysis JSON now, with a `mermaid` flowchart TD "
+            "using only: `flowchart TD`, node defs `Id[Label]`, and edges `A --> B`, "
+            "`A -- label --> B`, `A -->|label| B`. No subgraphs, styles, or cycles."
+        )
+    try:
+        result2 = _invoke_with_fallback(
+            _get_findings_agent, [{"role": "user", "content": retry_prompt}]
+        )
+        raw2 = _extract_last_content(result2)
+        repaired = parse_analysis(raw2, repository, known_paths=None)
+        if repaired.mermaid:
+            parse_mermaid(repaired.mermaid)  # accept only if it parses now
+            return repaired
+    except Exception as exc2:
+        logger.warning("analyze_findings: mermaid retry failed (%s); keeping original", exc2)
+    return analysis
 
 
 def _graph_file_paths(graph: Any) -> frozenset[str]:
