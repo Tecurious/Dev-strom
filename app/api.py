@@ -467,6 +467,21 @@ def get_analysis_diagram_html(run_id: str, user: dict = Depends(require_user)):
                     headers={"Content-Disposition": f'inline; filename="diagram-{run_id}.html"'})
 
 
+@api.get("/analyze/{run_id}/archify.json")
+def get_analysis_archify_spec(run_id: str, user: dict = Depends(require_user)):
+    """Return the stored Archify architecture spec for the UI's interactive
+    diagram renderer. 404 when the analysis has none (fallback: mermaid)."""
+    if get_analysis_run is None:
+        raise HTTPException(status_code=503, detail="Analysis store unavailable.")
+    record = get_analysis_run(run_id, owner_id=uuid.UUID(user["id"]))
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"Analysis run {run_id} not found.")
+    spec = record["analysis"].get("archify")
+    if not spec:
+        raise HTTPException(status_code=404, detail="This analysis has no archify spec.")
+    return spec
+
+
 @api.get("/analyses")
 def list_analyses(
     user: dict = Depends(require_user),
