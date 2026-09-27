@@ -26,6 +26,7 @@ from app.services.models import ANONYMOUS_USER_ID
 
 load_dotenv()
 
+from app.admin.routes import router as admin_router
 from app.auth.deps import require_user
 from app.auth.routes import router as auth_router
 from app.cartographer.archify_spec import renderable_archify
@@ -97,6 +98,7 @@ api.add_middleware(
 )
 
 api.include_router(auth_router)
+api.include_router(admin_router)
 
 
 # ── Idea Generation ───────────────────────────────────────────────────────────

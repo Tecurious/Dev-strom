@@ -39,6 +39,10 @@ class User(Base):
     email: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # RBAC (see app.auth.deps.require_admin). Plain TEXT — "user" | "admin".
+    role: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'user'"))
+    # Checked in require_user so deactivated accounts cannot hit any gated route.
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), server_default=text("now()"),
     )
