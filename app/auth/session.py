@@ -89,4 +89,11 @@ def set_session_cookie(
 
 
 def clear_session_cookie(response: Response) -> None:
-    response.delete_cookie(COOKIE_NAME, path="/", samesite="lax")
+    # Attributes must match set_session_cookie or browsers keep the Secure cookie.
+    response.delete_cookie(
+        COOKIE_NAME,
+        path="/",
+        samesite="lax",
+        secure=settings.session_cookie_secure,
+        httponly=True,
+    )

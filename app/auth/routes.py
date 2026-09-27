@@ -137,5 +137,11 @@ def callback(
 
     redirect = RedirectResponse(f"{web}{_safe_next(data.get('next'))}")
     session.set_session_cookie(redirect, uuid.UUID(user["id"]))
-    redirect.delete_cookie(_STATE_COOKIE, path="/")
+    redirect.delete_cookie(
+        _STATE_COOKIE,
+        path="/",
+        samesite="lax",
+        secure=settings.session_cookie_secure,
+        httponly=True,
+    )
     return redirect

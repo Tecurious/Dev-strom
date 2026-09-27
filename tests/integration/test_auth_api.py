@@ -60,10 +60,18 @@ def test_gated_route_passes_with_valid_session(client, auth_on, monkeypatch):
     assert seen["user_id"] == uuid.UUID(uid)
 
 
-def test_logout_clears_cookie(client, auth_on):
+def test_logout_clears_cookie(client, auth_on, monkeypatch):
+    # Cookie was issued Secure (WEB_BASE_URL is https) — clear must match or
+    # browsers keep the session.
+    monkeypatch.setattr(
+        session_module.settings, "web_base_url", "https://example.test", raising=False
+    )
     resp = client.post("/auth/logout")
     assert resp.status_code == 204
-    assert "ds_session=" in resp.headers.get("set-cookie", "")
+    header = resp.headers.get("set-cookie", "").lower()
+    assert "ds_session=" in header
+    assert "max-age=0" in header
+    assert "secure" in header
 
 
 def test_login_unknown_provider_404(client, auth_on):
