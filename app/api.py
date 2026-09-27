@@ -28,6 +28,7 @@ load_dotenv()
 
 from app.auth.deps import require_user
 from app.auth.routes import router as auth_router
+from app.cartographer.archify_spec import renderable_archify
 from app.config import settings
 from app.graph import app as graph_app, expand_idea as graph_expand_idea
 from app.services import db
@@ -360,6 +361,8 @@ def _analysis_response(run_id: str, analysis: dict, graph: dict | None) -> dict:
     `mermaid` architecture diagram included, may be null), plus the persisted
     `run_id` (used by GET /analyze/{run_id}) and the `graph` extra (the
     structural ProjectGraph, for a UI that renders the wiring natively)."""
+    if analysis.get("archify"):
+        analysis = {**analysis, "archify": renderable_archify(analysis["archify"])}
     return {"run_id": run_id, **analysis, "graph": graph}
 
 
@@ -476,7 +479,7 @@ def get_analysis_archify_spec(run_id: str, user: dict = Depends(require_user)):
     record = get_analysis_run(run_id, owner_id=uuid.UUID(user["id"]))
     if record is None:
         raise HTTPException(status_code=404, detail=f"Analysis run {run_id} not found.")
-    spec = record["analysis"].get("archify")
+    spec = renderable_archify(record["analysis"].get("archify"))
     if not spec:
         raise HTTPException(status_code=404, detail="This analysis has no archify spec.")
     return spec
