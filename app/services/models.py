@@ -1,15 +1,8 @@
-"""SQLAlchemy ORM models mapped to the Dev-Strom V3 database tables.
-
-Each class mirrors a table created in migration 001_initial_schema.
-Only tables needed by current V3 tickets are modelled here — add
-the remaining tables (user_api_keys, web_chunks) when their tickets
-are implemented.
-"""
+"""SQLAlchemy ORM models for the tables the app reads and writes today."""
 
 import uuid
 from datetime import datetime
 
-from pgvector.sqlalchemy import Vector
 from sqlalchemy import Boolean, ForeignKey, Integer, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -46,6 +39,10 @@ class User(Base):
     email: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # RBAC (see app.auth.deps.require_admin). Plain TEXT — "user" | "admin".
+    role: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'user'"))
+    # Checked in require_user so deactivated accounts cannot hit any gated route.
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), server_default=text("now()"),
     )
@@ -115,51 +112,6 @@ class ExpandedIdea(Base):
     )
 
     run: Mapped["Run"] = relationship(back_populates="expanded_ideas")
-
-
-# ── cartograph_runs (legacy — table retained, no longer written) ───────────────
-class CartographRun(Base):
-    """Legacy F1 cartograph runs. Superseded by `analysis_runs`; kept so
-    existing rows remain readable until a follow-up migration drops the table.
-    """
-
-    __tablename__ = "cartograph_runs"
-
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        server_default=text("gen_random_uuid()"),
-    )
-    slug: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
-    repo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    root_path: Mapped[str] = mapped_column(Text, nullable=False)
-    project_graph: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    architecture_report: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), server_default=text("now()"),
-    )
-
-
-# ── advisor_runs (legacy — table retained, no longer written) ────────────────
-class AdvisorRun(Base):
-    """Legacy F2 advisor runs. Superseded by analysis `recommendations`; kept
-    so existing rows remain readable until a follow-up migration drops the table.
-    """
-
-    __tablename__ = "advisor_runs"
-
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        server_default=text("gen_random_uuid()"),
-    )
-    slug: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
-    cartograph_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    repo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    advisor_report: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), server_default=text("now()"),
-    )
 
 
 # ── analysis_runs (Evidence-First Repository Intelligence) ──────────────────────

@@ -17,3 +17,6 @@ htmlcov/
 .cursor/cli.json
 .codex/config.toml
 .codex/hooks.json
+
+# Local planning notes — not tracked
+todo/

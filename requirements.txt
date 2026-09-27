@@ -8,7 +8,6 @@ pydantic>=2.0
 pydantic-settings>=2.0
 fastapi>=0.115
 uvicorn[standard]>=0.32
-langchain-mcp-adapters>=0.3.0
 # ── database (V3-2) ───────────────────────────────────────────────────────────
 psycopg2-binary>=2.9
 sqlalchemy>=2.0,<2.1  # 2.1 changes the default postgresql:// driver to psycopg3
@@ -16,7 +15,6 @@ pgvector>=0.3
 alembic>=1.13
 
 # ── auth (Google + GitHub OAuth, JWT session cookie) ──────────────────────────
-authlib>=1.3
 pyjwt[crypto]>=2.9
 httpx>=0.27
 itsdangerous>=2.2

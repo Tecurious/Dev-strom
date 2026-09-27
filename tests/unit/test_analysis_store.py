@@ -22,6 +22,7 @@ def test_summarize_full_analysis():
     row = summarize_analysis_row("run-1", "https://x/y.git", _full_analysis(), "2026-01-01T00:00:00+00:00")
     assert row == {
         "run_id": "run-1",
+        "user_id": None,
         "repo_url": "https://x/y.git",
         "language": "python",
         "status": "complete",
@@ -29,6 +30,14 @@ def test_summarize_full_analysis():
         "recommendation_count": 1,
         "created_at": "2026-01-01T00:00:00+00:00",
     }
+
+
+def test_summarize_carries_user_id_when_given():
+    row = summarize_analysis_row(
+        "run-1", "https://x/y.git", _full_analysis(), "2026-01-01T00:00:00+00:00",
+        user_id="11111111-1111-1111-1111-111111111111",
+    )
+    assert row["user_id"] == "11111111-1111-1111-1111-111111111111"
 
 
 def test_summarize_defaults_on_empty_analysis():

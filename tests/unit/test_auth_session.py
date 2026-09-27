@@ -20,6 +20,15 @@ def test_issue_then_read_round_trips():
     assert session.read_token(token) == uid
 
 
+def test_impersonation_claims_round_trip():
+    target = uuid.uuid4()
+    admin = uuid.uuid4()
+    token = session.issue_token(target, impersonator_id=admin)
+    claims = session.read_claims(token)
+    assert claims.user_id == target
+    assert claims.impersonator_id == admin
+
+
 def test_expired_token_raises_session_error(monkeypatch):
     uid = uuid.uuid4()
     past = datetime.now(UTC) - timedelta(days=1)

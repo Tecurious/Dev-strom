@@ -11,8 +11,6 @@ from langgraph.graph import END, START, StateGraph
 from app.config import settings
 from app.llm import chat_model
 from app.models.domain import ProjectIdea
-from app.services.mcp_client import is_mcp_enabled, load_mcp_tools
-from app.services.models import ANONYMOUS_USER_ID
 from app.services.web_context import fetch_real_world_problems
 
 logger = logging.getLogger(__name__)
@@ -81,17 +79,14 @@ def _log_model_call(request, handler):
 
 
 @lru_cache(maxsize=None)
-def _get_idea_agent(model: str = MODEL, use_mcp: bool = False):
-    # MCP tools + a dedup-aware prompt when the PostgreSQL MCP server is enabled
-    # (V3-6/7); otherwise the original tool-free, strict-JSON idea agent. Model is
-    # parameterized so the fallback chain can retry across MODEL -> MODEL_FALLBACKS.
-    tools = list(load_mcp_tools()) if use_mcp else []
-    prompt = _IDEAS_SYSTEM_MCP if use_mcp else _IDEAS_SYSTEM
+def _get_idea_agent(model: str = MODEL):
+    # Tool-free, strict-JSON idea agent. Model is parameterized so the fallback
+    # chain can retry across MODEL -> MODEL_FALLBACKS.
     return create_deep_agent(
         name="idea_generator",
         model=chat_model(model),
-        tools=tools,
-        system_prompt=prompt,
+        tools=[],
+        system_prompt=_IDEAS_SYSTEM,
         middleware=[_log_model_call],
     )
 
@@ -201,20 +196,6 @@ Follow these instructions exactly and obey all guardrails:
    - Ensure each "problem_statement" describes a solvable engineering problem, not a physical impossibility.
 """
 
-_IDEAS_SYSTEM_MCP = _IDEAS_SYSTEM.replace(
-    "   - Do NOT use any tools or external APIs.\n",
-    "   - Use the provided MCP database tools to query past runs before generating ideas.\n",
-) + """\
-10. MCP DEDUPLICATION (required when database tools are available):
-   - The user message includes `user_id` and `tech_stack`.
-   - Before writing JSON, call the `query` tool to fetch the last 3 runs for this user and tech stack from the `runs` table (column `ideas` is JSONB).
-   - Review past idea names and problem statements; ensure every new idea differs meaningfully in problem, architecture, or primary focus.
-   - Example SQL:
-     SELECT ideas, created_at FROM runs
-     WHERE user_id = '<user_id>' AND tech_stack ILIKE '%<tech_stack>%'
-     ORDER BY created_at DESC LIMIT 3
-"""
-
 _EXPAND_SYSTEM = """\
 You are an implementation advisor. Given a project idea (name, pitch, problem_statement, and optional context fields), \
 produce a high-level implementation plan and a deeper 5-step extended plan.
@@ -269,10 +250,7 @@ def generate_ideas(state: DevStromState) -> dict:
     web_context = state["web_context"]
     count = IDEAS_PER_RUN
 
-    parts = [
-        f"Tech stack: {tech_stack}",
-        f"user_id: {ANONYMOUS_USER_ID}",
-    ]
+    parts = [f"Tech stack: {tech_stack}"]
     if intent := state.get("intent"):
         parts.append(
             f"User's request (natural language): {intent}\n"
@@ -305,14 +283,7 @@ def generate_ideas(state: DevStromState) -> dict:
         "Do NOT include implementation_plan.\n"
     )
 
-    # Preserve both: MCP tool selection (per is_mcp_enabled) AND the model
-    # fallback chain. The lambda binds use_mcp so _invoke_with_fallback only
-    # varies the model as it walks MODEL -> MODEL_FALLBACKS.
-    use_mcp = is_mcp_enabled()
-    result = _invoke_with_fallback(
-        lambda model: _get_idea_agent(model, use_mcp),
-        [{"role": "user", "content": "\n".join(parts)}],
-    )
+    result = _invoke_with_fallback(_get_idea_agent, [{"role": "user", "content": "\n".join(parts)}])
 
     ideas = _parse_ideas(_extract_last_content(result), count)
     if not ideas:

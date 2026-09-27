@@ -228,16 +228,15 @@ def test_stored_archify_spec_is_repaired_on_read(client, monkeypatch):
 
     record = _record_with_archify(PROD_REGRESSION)
     monkeypatch.setattr(api_module, "get_analysis_run", lambda run_id, owner_id=None: record)
-    for body in (client.get("/analyze/r1").json()["archify"], client.get("/analyze/r1/archify.json").json()):
-        assert body["layout"]["mode"] == "grid"
-        assert "quality_profile" not in body["meta"]
+    body = client.get("/analyze/r1").json()["archify"]
+    assert body["layout"]["mode"] == "grid"
+    assert "quality_profile" not in body["meta"]
 
 
 def test_unrenderable_stored_archify_falls_back_to_mermaid(client, monkeypatch):
     record = _record_with_archify({"schema_version": 1, "components": [{"id": "x"}]})
     monkeypatch.setattr(api_module, "get_analysis_run", lambda run_id, owner_id=None: record)
     assert client.get("/analyze/r1").json()["archify"] is None
-    assert client.get("/analyze/r1/archify.json").status_code == 404
 
 
 def test_get_analyze_run_not_found_returns_404(client, monkeypatch):
