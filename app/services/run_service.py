@@ -110,27 +110,26 @@ def get_latest_expansion(*, run_id: str, pid: int) -> dict | None:
 
 def load_history(
     *,
-    user_id: uuid.UUID = ANONYMOUS_USER_ID,
+    user_id: uuid.UUID | None = ANONYMOUS_USER_ID,
     limit: int = 20,
     offset: int = 0,
 ) -> list[dict]:
-    """Fetch the user's past runs, most recent first.
-
-    Returns a list of dicts with run metadata (no full ideas blob —
-    call get_run() for the full payload). `run_id` is the public slug.
+    """Fetch runs, most recent first, scoped to `user_id` — or every user's,
+    when `user_id=None` (the admin dashboard's cross-user listing; see
+    app.services.admin). Returns dicts with run metadata (no full ideas
+    blob — call get_run() for the full payload). `run_id` is the public
+    slug.
     """
     with get_session() as session:
-        stmt = (
-            select(Run)
-            .where(Run.user_id == user_id)
-            .order_by(Run.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
+        stmt = select(Run).order_by(Run.created_at.desc())
+        if user_id is not None:
+            stmt = stmt.where(Run.user_id == user_id)
+        stmt = stmt.limit(limit).offset(offset)
         runs = session.execute(stmt).scalars().all()
         return [
             {
                 "run_id": public_id(r),
+                "user_id": str(r.user_id),
                 "tech_stack": r.tech_stack,
                 "domain": r.domain,
                 "level": r.level,

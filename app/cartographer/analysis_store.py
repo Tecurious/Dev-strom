@@ -82,21 +82,28 @@ class PostgresJsonbStore:
             stmt = stmt.limit(limit).offset(offset)
             rows = session.execute(stmt).scalars().all()
             return [
-                summarize_analysis_row(public_id(r), r.repo_url, r.analysis, r.created_at.isoformat())
+                summarize_analysis_row(
+                    public_id(r), r.repo_url, r.analysis, r.created_at.isoformat(), user_id=str(r.user_id),
+                )
                 for r in rows
             ]
 
 
-def summarize_analysis_row(run_id: str, repo_url: str | None, analysis: dict | None, created_at: str) -> dict:
+def summarize_analysis_row(
+    run_id: str, repo_url: str | None, analysis: dict | None, created_at: str, *, user_id: str | None = None,
+) -> dict:
     """Project a stored Analysis (JSONB dict) into a History-list summary row.
 
     Pure and defensive so it can be unit-tested without a DB and never raises
-    on a partial/legacy payload: missing pieces default to null/0.
+    on a partial/legacy payload: missing pieces default to null/0. `user_id`
+    is optional (unused by the per-user History page, attached for the admin
+    dashboard's cross-user listing — see app.services.admin).
     """
     analysis = analysis or {}
     repository = analysis.get("repository") or {}
     return {
         "run_id": run_id,
+        "user_id": user_id,
         "repo_url": repo_url,
         "language": repository.get("language"),
         "status": analysis.get("status"),

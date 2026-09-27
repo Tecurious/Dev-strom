@@ -6,6 +6,7 @@ import uuid
 
 from sqlalchemy import select
 
+from app.config import settings
 from app.services.db import get_session
 from app.services.models import User
 
@@ -25,10 +26,13 @@ class EmailTakenError(Exception):
 def upsert_user(profile: dict) -> dict:
     """Insert or update a user from a normalized OAuth profile (see
     providers.exchange_code). Returns the user as a plain dict.
+
+    Emails listed in ADMIN_EMAILS are promoted to role=admin on every
+    successful sign-in (idempotent). That is the OAuth-app bootstrap path.
     """
     provider = profile["provider"]
     provider_user_id = profile["provider_user_id"]
-    email = profile["email"]
+    email = profile["email"].strip().lower()
 
     with get_session() as session:
         user = session.execute(
@@ -57,6 +61,9 @@ def upsert_user(profile: dict) -> dict:
             user.name = profile.get("name")
             user.avatar_url = profile.get("avatar_url")
 
+        if email in settings.admin_email_set:
+            user.role = "admin"
+
         session.flush()
         return _to_dict(user)
 
@@ -67,6 +74,21 @@ def get_user(user_id: uuid.UUID) -> dict | None:
         return _to_dict(user) if user is not None else None
 
 
+def promote_email(email: str) -> dict:
+    """Break-glass: set role=admin for an existing user by email.
+
+    Raises LookupError if no user has that email.
+    """
+    email = email.strip().lower()
+    with get_session() as session:
+        user = session.execute(select(User).where(User.email == email)).scalar_one_or_none()
+        if user is None:
+            raise LookupError(f"No user with email {email!r}")
+        user.role = "admin"
+        session.flush()
+        return _to_dict(user)
+
+
 def _to_dict(user: User) -> dict:
     return {
         "id": str(user.id),
@@ -75,4 +97,6 @@ def _to_dict(user: User) -> dict:
         "avatar_url": user.avatar_url,
         "auth_provider": user.auth_provider,
         "created_at": user.created_at.isoformat(),
+        "role": user.role,
+        "is_active": user.is_active,
     }

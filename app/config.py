@@ -73,6 +73,12 @@ class Settings(BaseSettings):
     # Never enable in production.
     mock_auth: bool = Field(default=False, alias="MOCK_AUTH")
 
+    # Comma-separated emails promoted to admin on every successful OAuth
+    # (or mock) sign-in. Break-glass bootstrap for a live OAuth app — after
+    # at least one admin exists, further admins can also be granted from the
+    # dashboard. Leave empty in .env.example; never commit real addresses.
+    admin_emails: str = Field(default="", alias="ADMIN_EMAILS")
+
     google_client_id: str | None = Field(default=None, alias="GOOGLE_CLIENT_ID")
     google_client_secret: str | None = Field(default=None, alias="GOOGLE_CLIENT_SECRET")
     github_client_id: str | None = Field(default=None, alias="GITHUB_CLIENT_ID")
@@ -81,6 +87,14 @@ class Settings(BaseSettings):
     @property
     def session_cookie_secure(self) -> bool:
         return self.web_base_url.startswith("https://")
+
+    @property
+    def admin_email_set(self) -> frozenset[str]:
+        return frozenset(
+            e.strip().lower()
+            for e in self.admin_emails.split(",")
+            if e.strip()
+        )
 
     # ── LangSmith tracing ──────────────────────────────────────────────────
     langchain_tracing_v2: bool = Field(default=False, alias="LANGCHAIN_TRACING_V2")

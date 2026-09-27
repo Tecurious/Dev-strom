@@ -3,6 +3,8 @@ DTO models — describe what crosses the HTTP boundary (request and response bod
 These are shaped around the FastAPI contract, not the AI layer.
 """
 
+from typing import Literal
+
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -126,3 +128,13 @@ class JobResponse(BaseModel):
     error: str | None = None
     created_at: str
     updated_at: str
+
+
+# ── Admin (RBAC dashboard) ──────────────────────────────────────────────────────
+
+class SetRoleRequest(BaseModel):
+    role: Literal["user", "admin"]
+
+
+class SetActiveRequest(BaseModel):
+    is_active: bool
