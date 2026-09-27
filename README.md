@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="brand/banner.png" alt="Dev-Strom — You've learned the stack. Now build something with it." width="100%">
+  <img src="https://raw.githubusercontent.com/Tecurious/Dev-Strom-Ui/main/brand/banner.png" alt="Dev-Strom — You've learned the stack. Now build something with it." width="100%">
 </p>
 
 # Dev-Strom
