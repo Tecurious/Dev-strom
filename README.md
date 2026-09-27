@@ -120,4 +120,3 @@ mypy app          # types (advisory)
 - Architecture & roadmap — [docs/PLAN.md](docs/PLAN.md)
 - Tickets — [docs/V3_TICKETS.md](docs/V3_TICKETS.md) · Deferred work — [docs/BACKLOG.md](docs/BACKLOG.md)
 - Frontend — [web/README.md](web/README.md)
-- PostgreSQL MCP (optional, lets the idea agent dedupe against past runs) — [postgresql-mcp](https://github.com/vallaksa/postgresql-mcp); set `MCP_HTTP_URL`, `MCP_API_KEY`, `ENABLE_MCP=true`
