@@ -82,7 +82,7 @@ file-level nitpicks.
   "archify": {
     "schema_version": 1,
     "diagram_type": "architecture",
-    "meta": {"title": "System architecture", "quality_profile": "showcase"},
+    "meta": {"title": "System architecture"},
     "components": [
       {"id": "web", "type": "frontend", "label": "Web UI", "sublabel": "React", "row": 0, "col": 0},
       {"id": "api", "type": "backend", "label": "API Server", "sublabel": "FastAPI", "row": 0, "col": 1},
@@ -130,7 +130,8 @@ file-level nitpicks.
    - "archify": the SAME diagram as archify spec — component `type` MUST be one of
      frontend | backend | database | cloud | security | messagebus | external;
      `variant` one of emphasis | dashed | security | default (optional);
-     grid `row`/`col` place components top-to-bottom in data-flow order, no overlaps;
+     grid `row`/`col` place components top-to-bottom in data-flow order, no overlaps
+     (sizes, spacing and edge routing are computed server-side — emit only the keys shown);
      ≤15 components; connections reference component ids; boundaries `wraps` reference ids.
    - "findings": 3-8 items max. Focus on architecture patterns and service boundaries.
    - Evidence may cite a service directory (app/, web/) or integration from the graph — NOT class/function names.
